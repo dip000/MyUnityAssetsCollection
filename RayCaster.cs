@@ -47,8 +47,6 @@ public class RayCaster : MonoBehaviour
     public LayerMask _dynamicBlockingMask = 0;
     public bool _showDebugs = false;
 
-    static int blockingIndex;
-
     void Start()
     {
         //Set values. Unity not showing static variables in inspector :C
@@ -85,11 +83,6 @@ public class RayCaster : MonoBehaviour
                 Debuger("objectsHit[" + i + "] name:" + (objectsHit[i].transform.name));
             }
         }
-
-        //TESTS: PASS
-        //Test targetComponent = GetFirstHitComponent<Test>(layerBlocker:false);
-        //bool hasHitMe = (targetComponent != null) ? true : false;
-
     }
 
     static void CastRays()
@@ -162,7 +155,7 @@ public class RayCaster : MonoBehaviour
 			//there's no next valid hit component.
 			//Spare it if it is a blocker itself
 			if( layerBlocker && !isMe ){
-				if ( layerBlocker && DetectMaskBlocking(objectsHit[i]) ){
+				if ( DetectMaskBlocking(objectsHit[i]) ){
 					return false;
 				}
 			}
@@ -177,7 +170,7 @@ public class RayCaster : MonoBehaviour
 
 
     //NOT TESTED IN CURRENT VERSION
-    /*public static T[] GetHitComponents<T>()
+    public static T[] GetHitComponents<T>()
     {
         T[] hitComponents = null;
         int j=0;
@@ -194,7 +187,7 @@ public class RayCaster : MonoBehaviour
         }
 
         return hitComponents;
-    }*/
+    }
 
     // DEBUGGERS
     public static bool showDebugs;
