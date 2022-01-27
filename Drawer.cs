@@ -47,7 +47,7 @@ public class Drawer : MonoBehaviour
 		pullVectorNormalized = pullVector.normalized;
 		containerPosition = container.position;
 
-		slideSurface = new Plane(Vector3.up, container.position);
+		slideSurface = new Plane(Vector3.up, containerPosition);
 		LineDebuger(containerPosition, containerPosition + pullVector);
 	}
 
