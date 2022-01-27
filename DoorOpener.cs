@@ -7,7 +7,7 @@ using UnityEngine;
  *		
  */
 
-public class DoorOpener2 : MonoBehaviour
+public class DoorOpener : MonoBehaviour
 {
 	[Header("Setup")]
 	public Transform handle;
