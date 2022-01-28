@@ -30,26 +30,54 @@ public class DoorOpener : MonoBehaviour
 	Plane slideSurface;
 	
 	float startPoint;
+	float endPoint;
 	float snapTowards;
 	float openingAngleFixed;
 	float snappedTo;
 	float previousClamp;
+	float distanceToOpen;
+	bool isClosing = false;
+	float clampedAngle;
+	float backAngle;
+
+	WaitForSeconds waitForDrawStep;
+	WaitForSeconds waitForSnapStep;
 
 	public void Start(){
-		startPoint = doorContainer.localEulerAngles.y;
+		
+		//Module to avoid angles outside of range 0-360
+		startPoint = ModuleAngle( doorContainer.localEulerAngles.y );
+		endPoint = ModuleAngle( startPoint + openingAngle );
+		openingAngleFixed = ModuleAngle( openingAngle );
+		distanceToOpen = Mathf.Abs( openingAngle );
+		
+		//initializers
 		snapTowards = startPoint;
-		openingAngleFixed = (openingAngle<0) ? openingAngle+360 : openingAngle;
 		previousClamp = startPoint;
 		
+		//Direction of apperture fix
+		if(openingAngle < 0){
+			isClosing = true;
+			
+			float switchReg = endPoint;
+			endPoint = startPoint;
+			startPoint = switchReg;
+		}
+		
+		backAngle = ModuleAngle((startPoint - endPoint)*0.5f + endPoint + 180);
+
+		
+		waitForDrawStep = new WaitForSeconds(drawingTimeStep);
+		waitForSnapStep = new WaitForSeconds(snapTimeStep);
+		
 		//Sliding surface is facing up, located at handle position
-		slideSurface = new Plane(Vector3.up, handle.position);		
+		slideSurface = new Plane(Vector3.up, handle.position);	
+		DebugDrawer("startPoint:"+startPoint+"; endPoint:"+endPoint+"; openingAngleFixed:"+openingAngleFixed+"; distanceToOpen:"+distanceToOpen);
+		
 	}
 
 	void Update()
     {
-		//For surface plane debugging
-		//box.position = GetMousePositionOverSlideSurface();
-		
 		//Conditions to start sliding the box
 		if (Input.GetMouseButtonDown(0))
 			if(HoverOverHandle())
@@ -80,8 +108,7 @@ public class DoorOpener : MonoBehaviour
     {
 		StartCoroutine(SnapingMotion(Vector3.zero));
 	}*/
-	float clampedAngle;
-	bool breakDrawingMotion;
+	
 	IEnumerator DrawingMotion(){
 		if(Input.GetMouseButton(0) == false){
 			isSwiping = false;
@@ -90,42 +117,35 @@ public class DoorOpener : MonoBehaviour
 			yield break;
 		}
 		
-		yield return new WaitForSeconds(drawingTimeStep);
+		yield return waitForDrawStep;
 		
 		Vector3 pointOverSlideSurface = GetMousePositionOverSlideSurface();		
 		doorContainer.LookAt( pointOverSlideSurface );
 		
-		float angle = doorContainer.localEulerAngles.y;
-		float fromAngle = startPoint;
-		float toAngle = startPoint + openingAngleFixed;
-		
-		clampedAngle = ClampAngle(angle, fromAngle, toAngle);
-		
-		/*if(breakDrawingMotion){
-			breakDrawingMotion = false;
-			//isSwiping = false;
-			yield break;
-		}*/
-			
+		float angle = doorContainer.localEulerAngles.y;		
+		clampedAngle = ClampAngle(angle, startPoint, endPoint, backAngle);
+
 		doorContainer.localEulerAngles = Vector3.up * clampedAngle;
-		//doorContainer.localEulerAngles = Vector3.up * Mathf.Clamp(angle, startPoint, startPoint+openingAngle );
 		
 		DebugDrawer("DOOR OPENER. Angle:" + angle + "; clampedAngle:" + clampedAngle);
 		StartCoroutine(DrawingMotion());
 	}
 	
-	/*
-	float ReformatAngle(float angle){
-		return (angle + 180 + 360) % 360 - 180;
-	}*/
-	float ClampAngle( float angle, float fromAngle, float toAngle ){
-		//Negative opening angle means closing. Thus, invertion
-		if(openingAngle < 0){
-			float switchReg = fromAngle;
-			fromAngle = toAngle;
-			toAngle = switchReg;
-		}
+	float AngleToPositive(float angle){
+		return (angle<0) ? angle+360 : angle;
+	}
+	
+	float ModuleAngle(float angle){
+		return (angle + 360) % 360;
+	}
+	
+
+
+	float ClampAngle( float angle, float fromAngle, float toAngle, float backAngle ){
 		
+		//Original angles for math operations
+		float _fromAngle = fromAngle;
+		float _angle = angle;
 		
 		//Reformat to zero-to-negative instead of zero-to-360
 		if(fromAngle > toAngle){
@@ -135,39 +155,21 @@ public class DoorOpener : MonoBehaviour
 			fromAngle = fromAngle - 360;
 		}
 		
+		
 		//If angle in range, return it
 		if(angle < toAngle && angle > fromAngle){
+			DebugDrawer("DOOR OPENER. Inside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
 			return angle;
 		}
 		
+		//TODO: consider zero cross on back angle
 		//If not in range, clamp it
 		else{
-			snapFinished = false;
-			float angleFixed = openingAngle<0?(fromAngle-toAngle) : (toAngle-fromAngle);
-			DebugDrawer("DOOR OPENER. toAngle:" + toAngle + "; fromAngle:" + fromAngle + "; angleFixed:" + angleFixed);
-			
-			if(angle < (angleFixed*0.5f + 180)){
-				/*if(previousClamp == fromAngle){
-					isSwiping = false;
-					breakDrawingMotion = true;
-					DebugDrawer("DOOR OPENER. Snap " + fromAngle + " TO " + toAngle);
-					StartCoroutine(SnapingMotion(fromAngle, toAngle));
-					previousClamp = toAngle;
-					return fromAngle;
-				}
-				previousClamp = toAngle;*/
+			DebugDrawer("DOOR OPENER. Outside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
+			if( angle > backAngle ){
 				return fromAngle;
 			}
 			else{
-				/*if(previousClamp == toAngle){
-					isSwiping = false;
-					breakDrawingMotion = true;
-					DebugDrawer("DOOR OPENER. Snap " + fromAngle + " TO " + toAngle);
-					StartCoroutine(SnapingMotion(toAngle, fromAngle));
-					previousClamp = fromAngle;
-					return toAngle;
-				}
-				previousClamp = fromAngle;*/
 				return toAngle;
 			}
 
@@ -192,18 +194,18 @@ public class DoorOpener : MonoBehaviour
 		}
 		
 		//detects in which drag point was left, and snaps accordilngly
-		float angleFix = openingAngleFixed<0 ? openingAngleFixed+360 : openingAngleFixed;
-		if ((clampedAngle) > ((angleFix) * snapPoint))
+		if( clampedAngle > ((startPoint - endPoint)*0.5f + endPoint) )
 		{
-			snapTowards = startPoint;
+			snapTowards = endPoint;
 		}
 		else
 		{
-			snapTowards = openingAngle;
+			snapTowards = startPoint;
 		}
+		//snapTowards = ClampAngle(clampedAngle, startPoint, endPoint, backAngle);;
 		
 		DebugDrawer("snapTowards:" + snapTowards + "; snapPoint:" + snapPoint);
-		DebugDrawer("clampedAngle:" + clampedAngle + "; angleFix:"+angleFix);
+		DebugDrawer("clampedAngle:" + clampedAngle + "; angleFix:"+((270-150) * snapPoint + 150));
 		StartCoroutine(SnapingMotion(clampedAngle, snapTowards));
 		//doorContainer.localEulerAngles = Vector3.up * snapTowards;
 
@@ -223,7 +225,7 @@ public class DoorOpener : MonoBehaviour
 				doorContainer.localEulerAngles = Vector3.up * angle;
 
 				DebugDrawer("Currently Snapping at (local): " + angle);
-				yield return new WaitForSeconds(snapTimeStep);
+				yield return waitForSnapStep;
 			}
 			else{
 				clampedAngle = angle;
