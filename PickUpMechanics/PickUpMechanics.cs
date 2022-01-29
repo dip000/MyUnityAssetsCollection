@@ -1,18 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+
+/* LISTEN TO EXTERNAL CONDITION:
+ 
+    public bool PickupCondition { get { return (Random.value > 0.5f); } }
+    void Awake(){ PickUpMechanics.ListenConditionalFrom(this, "PickupCondition"); }
+
+*/
 
 /*  NOTES:
  *      1. This script uses RayCaster.cs and have it somewhere in the scene
- *      2. Must have collider AND this script in the same gameobject
+ *      2. 
  *      3. 
  */
 
 public class PickUpMechanics : MonoBehaviour
 {
-    //[TextArea]
-    //public string Notes = "1. ";
-
     public Transform pickupHolder;
     public float objectsToFillAContainer = 1;
 
@@ -22,13 +24,15 @@ public class PickUpMechanics : MonoBehaviour
     public static event System.Action OnPickUp;
     public static event System.Action OnDrop;
 
-    void Start()
-    {
-
-    }
+    //To listen to an external condition, leave null to ignore
+    static System.Reflection.PropertyInfo pickupCondition;
+    static object pickupConditionInstance;
+    static System.Reflection.PropertyInfo dropCondition;
+    static object dropConditionInstance;
 
     void Update()
     {
+        
         if (Input.GetMouseButtonDown(0) == false)
         {
             return;
@@ -57,6 +61,12 @@ public class PickUpMechanics : MonoBehaviour
         if (targetComponent.myContainer.isBlocked)
         {
             Debuger("Container blocked");
+            return;
+        }
+
+        if (GetExternalPickupCondition() == false)
+        {
+            Debuger("External condition to pick up was not met");
             return;
         }
 
@@ -104,6 +114,12 @@ public class PickUpMechanics : MonoBehaviour
             return;
         }
 
+        if (GetExternalDropCondition() == false)
+        {
+            Debuger("External condition to drop was not met");
+            return;
+        }
+
         //Set container's object (no practical use for this yet)
         targetComponent.objectInside = handObject.GetComponent<Pickupable>();
 
@@ -128,6 +144,46 @@ public class PickUpMechanics : MonoBehaviour
     }
 
 
+    public static void ListenPickupConditionFrom(object _instance, string name)
+    {
+        pickupConditionInstance = _instance;
+        pickupCondition = pickupConditionInstance?.GetType().GetProperty(name);
 
+        if (pickupCondition == null)
+        {
+            Debug.LogWarning("PICKUP MECHANICS. Couldn't setup the listener to external conditional. Variable: " + name + " must exist in given instance, be public, be boolean, and have a getter to fetch a value");
+            pickupConditionInstance = null;
+        }
+    }
+    public static void ListenDropConditionFrom(object _instance, string name)
+    {
+        dropConditionInstance = _instance;
+        dropCondition = dropConditionInstance?.GetType().GetProperty(name);
+
+        if (dropCondition == null)
+        {
+            Debug.LogWarning("PICKUP MECHANICS. Couldn't setup the listener to external conditional. Variable: " + name + " must exist in given instance, be public, be boolean, and have a getter to fetch a value");
+            dropConditionInstance = null;
+        }
+    }
+
+    bool GetExternalPickupCondition()
+    {
+        //By default, not having external condition returns true to continue
+        bool result = true;
+        if (pickupCondition != null)
+            result = (bool)pickupCondition.GetValue(pickupConditionInstance, null);
+
+        return result;
+    }
+    bool GetExternalDropCondition()
+    {
+        //By default, not having external condition returns true to continue
+        bool result = true;
+        if (dropCondition != null)
+            result = (bool)dropCondition.GetValue(dropConditionInstance, null);
+
+        return result;
+    }
     public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 }
