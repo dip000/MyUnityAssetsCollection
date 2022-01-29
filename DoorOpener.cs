@@ -29,7 +29,6 @@ public class DoorOpener : MonoBehaviour
 	Ray ray;	
 	Plane slideSurface;
 	
-	float startPoint;
 	float endPoint;
 	float snapTowards;
 	float openingAngleFixed;
@@ -43,36 +42,44 @@ public class DoorOpener : MonoBehaviour
 	WaitForSeconds waitForDrawStep;
 	WaitForSeconds waitForSnapStep;
 
+
+	//BRANCH
+	float startPoint;
+	float currentDoorAngle;
+	Vector3 currentDoorDirection;
+	Vector3 rayDirection;
+	float angleIncrement;
+	float angleMin;
+	float angleMax;
+
 	public void Start(){
 		
-		//Module to avoid angles outside of range 0-360
-		startPoint = ModuleAngle( doorContainer.localEulerAngles.y );
-		endPoint = ModuleAngle( startPoint + openingAngle );
-		openingAngleFixed = ModuleAngle( openingAngle );
-		distanceToOpen = Mathf.Abs( openingAngle );
-		
-		//initializers
-		snapTowards = startPoint;
-		previousClamp = startPoint;
-		
-		//Direction of apperture fix
-		if(openingAngle < 0){
-			isClosing = true;
-			
-			float switchReg = endPoint;
-			endPoint = startPoint;
-			startPoint = switchReg;
+		//BRANCH
+		angleIncrement = 0;
+		currentDoorAngle = 0;
+		currentDoorDirection = handle.position - doorContainer.position;
+		//currentDoorDirection.y = 0;
+		if(openingAngle > 0){
+			angleMin = 0;
+			angleMax = openingAngle;
 		}
+		else{
+			angleMin = openingAngle;
+			angleMax = 0;
+		}
+		Vector3 slideSurfaceDirection = Camera.main.transform.position - doorContainer.position;
+		Debuger("angleMin:"+angleMin+"; angleMax:"+angleMax+"; slideSurfaceDirection:"+slideSurfaceDirection);
+		Debug.DrawLine(doorContainer.position, doorContainer.position+slideSurfaceDirection, Color.red, 10f);
 		
-		backAngle = ModuleAngle((startPoint - endPoint)*0.5f + endPoint + 180);
+		//Module to avoid angles outside of range 0-360
+		startPoint = ModuleAngle( doorContainer.eulerAngles.y );
 
-		
 		waitForDrawStep = new WaitForSeconds(drawingTimeStep);
 		waitForSnapStep = new WaitForSeconds(snapTimeStep);
 		
 		//Sliding surface is facing up, located at handle position
-		slideSurface = new Plane(Vector3.up, handle.position);	
-		DebugDrawer("startPoint:"+startPoint+"; endPoint:"+endPoint+"; openingAngleFixed:"+openingAngleFixed+"; distanceToOpen:"+distanceToOpen);
+		slideSurface = new Plane(slideSurfaceDirection, doorContainer.position);	
+		Debuger("startPoint:"+startPoint+"; endPoint:"+endPoint+"; openingAngleFixed:"+openingAngleFixed+"; distanceToOpen:"+distanceToOpen);
 		
 	}
 
@@ -100,7 +107,7 @@ public class DoorOpener : MonoBehaviour
 			snapFinished = false;
 
 			StartCoroutine(DrawingMotion());
-			DebugDrawer("DrawingMotion Started");
+			Debuger("DrawingMotion Started");
 		}	
 	}
 
@@ -119,15 +126,19 @@ public class DoorOpener : MonoBehaviour
 		
 		yield return waitForDrawStep;
 		
-		Vector3 pointOverSlideSurface = GetMousePositionOverSlideSurface();		
-		doorContainer.LookAt( pointOverSlideSurface );
 		
-		float angle = doorContainer.localEulerAngles.y;		
-		clampedAngle = ClampAngle(angle, startPoint, endPoint, backAngle);
-
-		doorContainer.localEulerAngles = Vector3.up * clampedAngle;
+		//BRANCH
+		rayDirection = GetMousePositionOverSlideSurface() - doorContainer.position;
+		//rayDirection.y = 0;
+		angleIncrement += Vector3.SignedAngle(currentDoorDirection, rayDirection, Vector3.up);
+		angleIncrement = Mathf.Clamp(angleIncrement, angleMin, angleMax);
 		
-		DebugDrawer("DOOR OPENER. Angle:" + angle + "; clampedAngle:" + clampedAngle);
+		doorContainer.eulerAngles = Vector3.up * (angleIncrement + startPoint);
+		
+		Debuger("rayDirection:" + rayDirection + "; currentDoorDirection:" + currentDoorDirection + "; angleIncrement:"+angleIncrement);
+		currentDoorDirection = rayDirection;
+		
+	
 		StartCoroutine(DrawingMotion());
 	}
 	
@@ -142,11 +153,6 @@ public class DoorOpener : MonoBehaviour
 
 
 	float ClampAngle( float angle, float fromAngle, float toAngle, float backAngle ){
-		
-		//Original angles for math operations
-		float _fromAngle = fromAngle;
-		float _angle = angle;
-		
 		//Reformat to zero-to-negative instead of zero-to-360
 		if(fromAngle > toAngle){
 			if(angle > fromAngle){
@@ -158,14 +164,14 @@ public class DoorOpener : MonoBehaviour
 		
 		//If angle in range, return it
 		if(angle < toAngle && angle > fromAngle){
-			DebugDrawer("DOOR OPENER. Inside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
+			Debuger("DOOR OPENER. Inside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
 			return angle;
 		}
 		
 		//TODO: consider zero cross on back angle
 		//If not in range, clamp it
 		else{
-			DebugDrawer("DOOR OPENER. Outside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
+			Debuger("DOOR OPENER. Outside Angle. angle:" + angle + "; fromAngle:" + fromAngle + "; toAngle:" + toAngle);
 			if( angle > backAngle ){
 				return fromAngle;
 			}
@@ -194,7 +200,7 @@ public class DoorOpener : MonoBehaviour
 		}
 		
 		//detects in which drag point was left, and snaps accordilngly
-		if( clampedAngle > ((startPoint - endPoint)*0.5f + endPoint) )
+		if( angleIncrement > openingAngle * 0.5f )
 		{
 			snapTowards = endPoint;
 		}
@@ -204,9 +210,9 @@ public class DoorOpener : MonoBehaviour
 		}
 		//snapTowards = ClampAngle(clampedAngle, startPoint, endPoint, backAngle);;
 		
-		DebugDrawer("snapTowards:" + snapTowards + "; snapPoint:" + snapPoint);
-		DebugDrawer("clampedAngle:" + clampedAngle + "; angleFix:"+((270-150) * snapPoint + 150));
-		StartCoroutine(SnapingMotion(clampedAngle, snapTowards));
+		Debuger("snapTowards:" + snapTowards + "; snapPoint:" + snapPoint);
+		Debuger("angleIncrement:" + angleIncrement + "; openingAngle:"+openingAngle);
+		StartCoroutine(SnapingMotion(angleIncrement+startPoint, snapTowards));
 		//doorContainer.localEulerAngles = Vector3.up * snapTowards;
 
 	}
@@ -224,7 +230,7 @@ public class DoorOpener : MonoBehaviour
 				angle = Mathf.Lerp(angle, snapTowards, currentSnapValue);
 				doorContainer.localEulerAngles = Vector3.up * angle;
 
-				DebugDrawer("Currently Snapping at (local): " + angle);
+				Debuger("Currently Snapping at (local): " + angle);
 				yield return waitForSnapStep;
 			}
 			else{
@@ -246,7 +252,7 @@ public class DoorOpener : MonoBehaviour
 		return ray.GetPoint(enter);
 	}
 	
-	public bool showDebugs; void DebugDrawer(string text){ if(showDebugs) Debug.Log(text); }
+	public bool showDebugs; void Debuger(string text){ if(showDebugs) Debug.Log(text); }
     void LineDebuger(Vector3 _from, Vector3 _to){
         if (showDebugs)
             Debug.DrawRay(_from, _to, Color.red, 0.05f);
