@@ -14,7 +14,6 @@ public class DoorOpener : MonoBehaviour
 	public Transform doorContainer;
 	public LayerMask handleLayerMask;
 	public LayerMask cilinderLayerMask;
-	public Transform cilinder;
 
 	[Header("Options")]
 	public float openingAngle = 120;
@@ -53,7 +52,18 @@ public class DoorOpener : MonoBehaviour
 		cam = Camera.main;
 	}
 
+	GameObject sphere;
+	
     public void Start(){
+		
+		sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+		sphere.transform.position = doorContainer.position;
+		float radius = (handle.position - doorContainer.position).magnitude;
+		sphere.transform.localScale = sphere.transform.localScale * (radius*2 + 0.3f);
+		sphere.layer = 12;
+		sphere.GetComponent<Renderer>().enabled = false;
+		Debuger("sphere radius:" + radius);
+		
 		
 		//resting position of door is zero to keep track of direction and magnitude of rotation
 		angleIncrement = 0;
@@ -85,9 +95,6 @@ public class DoorOpener : MonoBehaviour
 
 	void Update()
     {
-
-		//handle.position = GetMousePositionOverSlideSurface();
-
 		//Conditions to start sliding the box
 		if (Input.GetMouseButtonDown(0))
 			if(HoverOverHandle())
@@ -108,10 +115,10 @@ public class DoorOpener : MonoBehaviour
 			isSwiping = true;
 			snapFinished = false;
 
-			//InitializeSlideSurface();
-			//OpenAngleOnClickDown();
+			InitializeSlideSurface();
+			OpenAngleOnClickDown();
 			StartCoroutine(SwippingMotion());
-			Debuger("SwippingMotion Started");
+			Debuger("SwippingMotion Started with angleIncrement:"+angleIncrement);
 		}	
 	}
 
@@ -121,8 +128,9 @@ public class DoorOpener : MonoBehaviour
 		var planeSpawnPoint = GetPointOverHandleCollider();
 		Vector3 slideSurfaceDirection = (cam.transform.position - planeSpawnPoint).normalized;
 		currentDoorDirection = planeSpawnPoint - doorContainer.position;
+		currentDoorDirection.y = 0;
 
-		slideSurface = new Plane(Vector3.forward, doorContainer.position);
+		slideSurface = new Plane(slideSurfaceDirection, doorContainer.position);
 		LineDebuger(cam.transform.position, planeSpawnPoint);
 	}
 
@@ -158,9 +166,10 @@ public class DoorOpener : MonoBehaviour
 		}
 		
 		yield return waitForDrawStep;
-		
+
 		//Vector that points to the new direction to rotate
 		rayDirection = GetMousePositionOverSlideSurface() - doorContainer.position;
+		rayDirection.y=0;
 
 		//currentDoorDirection is a Vector that points to the direction before rotating
 		//angleIncrement keeps track of all movements made to have a better internal control
@@ -231,7 +240,7 @@ public class DoorOpener : MonoBehaviour
 
 		//Update internal angle
 		angleIncrement = snapTowards;
-
+		Debuger("SnappingMotion ended with angleIncrement:" + angleIncrement);
 	}
 
 	//-------------------- UTILITIES ----------------------------------------------
@@ -262,11 +271,20 @@ public class DoorOpener : MonoBehaviour
 
 	Vector3 GetMousePositionOverSlideSurface(){
 		//Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
-		RaycastHit hit;
-
 		ray = cam.ScreenPointToRay(Input.mousePosition);
-		Physics.Raycast(ray, out hit, 100, cilinderLayerMask);
-		return hit.point;
+		RaycastHit hit;
+		Vector3 point;
+
+		if(Physics.Raycast(ray, out hit, 100, cilinderLayerMask) == false){
+			float enter;
+			slideSurface.Raycast(ray, out enter);
+			point = ray.GetPoint(enter);
+		}
+		else{
+			point = hit.point;
+		}
+		
+		return point;
 	}
 
 
