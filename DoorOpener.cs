@@ -12,8 +12,7 @@ public class DoorOpener : MonoBehaviour
 	[Header("Setup")]
 	public Transform handle;
 	public Transform doorContainer;
-	public LayerMask handleLayerMask;
-	public LayerMask cilinderLayerMask;
+	public float doorHeight = 1.0f;
 
 	[Header("Options")]
 	public float openingAngle = 120;
@@ -56,12 +55,13 @@ public class DoorOpener : MonoBehaviour
 	
     public void Start(){
 		
-		sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+		sphere = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
 		sphere.transform.position = doorContainer.position;
 		float radius = (handle.position - doorContainer.position).magnitude;
-		sphere.transform.localScale = sphere.transform.localScale * (radius*2 + 0.3f);
-		sphere.layer = 12;
+		sphere.transform.localScale = new Vector3(sphere.transform.localScale.x*(radius*2 + 0.3f), doorHeight, sphere.transform.localScale.z*(radius*2 + 0.3f));
 		sphere.GetComponent<Renderer>().enabled = false;
+		
+		sphere.AddComponent<MeshCollider>();
 		Debuger("sphere radius:" + radius);
 		
 		
@@ -250,7 +250,7 @@ public class DoorOpener : MonoBehaviour
 		RaycastHit hit;
 
 		ray = cam.ScreenPointToRay(Input.mousePosition);
-		Physics.Raycast(ray, out hit, 100, handleLayerMask);
+		handle.GetComponent<Collider>().Raycast(ray, out hit, 100);
 		return hit.point;
 	}
 
@@ -275,7 +275,7 @@ public class DoorOpener : MonoBehaviour
 		RaycastHit hit;
 		Vector3 point;
 
-		if(Physics.Raycast(ray, out hit, 100, cilinderLayerMask) == false){
+		if(sphere.transform.GetComponent<MeshCollider>().Raycast(ray, out hit, 100) == false){
 			float enter;
 			slideSurface.Raycast(ray, out enter);
 			point = ray.GetPoint(enter);
