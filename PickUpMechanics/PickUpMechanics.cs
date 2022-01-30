@@ -16,10 +16,10 @@ using UnityEngine;
 public class PickUpMechanics : MonoBehaviour
 {
     public Transform pickupHolder;
-    public float objectsToFillAContainer = 1;
 
     public static bool hasObjectOnHand = false;
     public static Transform handObject;
+	public static Transform targetTransform;
 
     public static event System.Action OnPickUp;
     public static event System.Action OnDrop;
@@ -52,6 +52,8 @@ public class PickUpMechanics : MonoBehaviour
     void PickUp()
     {
         Pickupable targetComponent = RayCaster.GetFirstHitComponent<Pickupable>();
+		targetTransform = targetComponent?.transform;
+		
         if (targetComponent == null)
         {
             Debuger("There's object to pick up");
@@ -69,33 +71,32 @@ public class PickUpMechanics : MonoBehaviour
             Debuger("External condition to pick up was not met");
             return;
         }
-
-        //Clear container's object (no practical use for this yet)
-        targetComponent.myContainer.objectInside = null;
-
-        //Empty object's fill and clear its container
-        targetComponent.myContainer.fill--;
-        targetComponent.myContainer = null;
+	
+        //Reset object and Reset its container
+        targetComponent.myContainer.ResetOccupancy();
+        targetComponent.ResetOccupancy();
 
         //Disable collider to avoid clicking it on your hand
         //targetComponent.transform.GetComponent<Collider>().enabled = false;
 
         //Move object to hand and parent it
-        handObject = targetComponent.transform;
-        targetComponent.transform.position = pickupHolder.position;
-        targetComponent.transform.parent = pickupHolder;
+        handObject = targetTransform;
+        targetTransform.position = pickupHolder.position;
+        targetTransform.parent = pickupHolder;
 
         hasObjectOnHand = true;
 
         //Publish event if there's anyone subscribed to it
         if(OnPickUp != null) OnPickUp();
 
-        Debuger("Did Pick Up: " + targetComponent.transform.name);
+        Debuger("Did Pick Up: " + targetTransform.name);
     }
 
     void Drop()
     {
         Container targetComponent = RayCaster.GetFirstHitComponent<Container>();
+		targetTransform = targetComponent?.transform;
+		
         if (targetComponent == null)
         {
             Debuger("There's no container");
@@ -108,9 +109,9 @@ public class PickUpMechanics : MonoBehaviour
             return;
         }
 
-        if (targetComponent.fill >= objectsToFillAContainer)
+        if ( targetComponent.GetOccupancyState() )
         {
-            Debuger("Container: " + targetComponent.transform.name + " is full");
+            Debuger("Container: " + targetTransform.name + " is full");
             return;
         }
 
@@ -119,20 +120,18 @@ public class PickUpMechanics : MonoBehaviour
             Debuger("External condition to drop was not met");
             return;
         }
+		
 
-        //Set container's object (no practical use for this yet)
-        targetComponent.objectInside = handObject.GetComponent<Pickupable>();
-
-        //fill container and set object's new container
-        targetComponent.fill++;
-        handObject.GetComponent<Pickupable>().myContainer = targetComponent;
+        //Set container and container's object
+        targetComponent.SetOccupancy( handObject.GetComponent<Pickupable>() );
+        handObject.GetComponent<Pickupable>().SetOccupancy( targetComponent );
 
         //Enable object's collider to be able to click it again
         //handObject.GetComponent<Collider>().enabled = true;
 
         //Move object to container and parent it
-        handObject.position = targetComponent.transform.position;
-        handObject.parent = targetComponent.transform;
+        handObject.position = targetTransform.position;
+        handObject.parent = targetTransform;
         handObject = null;
 
         hasObjectOnHand = false;
@@ -140,7 +139,7 @@ public class PickUpMechanics : MonoBehaviour
         //Publish event if there's anyone subscribed to it
         if (OnDrop != null) OnDrop();
         
-        Debuger("Did Drop: " + targetComponent.transform.name);
+        Debuger("Did Drop: " + targetTransform.name);
     }
 
 
