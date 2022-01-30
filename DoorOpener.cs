@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 /*	Use example for pushing/pulling a box 2 meters:
  *		
@@ -9,42 +10,43 @@ using UnityEngine;
 
 public class DoorOpener : MonoBehaviour
 {
-	[Header("Setup")]
+	[Header("Setup (Container must be pivoted)")]
 	public Transform handle;
 	public Transform doorContainer;
 	public float doorHeight = 1.0f;
 
 	[Header("Options")]
+	[Tooltip("Negative to close. Also accepts several turns like 720")]
 	public float openingAngle = 120;
 	public bool snapToEndPoints = true;
 	public bool smartSnapping = true;
 	public float snapSpeed = 10f;
-	public float openingAngleOnClickDown = 0f;
 
 	[Header("Advanced")]
+	[Tooltip("If door is in resting position, rotate it a little to let user know that can be interactued adding visual clarity and intuitiveness")]
+	public float openingAngleOnClickDown = 0f;
 	public float drawingTimeStep = 0.05f;
 	public float snapTimeStep = 0.05f;
 
+	//States
 	[HideInInspector] public bool isSwiping = false;
 	[HideInInspector] public bool snapFinished = false;
 
+	//Internal control
 	Ray ray;	
 	Plane slideSurface;
 	
-	float endPoint;
-	float snapTowards;
-
-	WaitForSeconds waitForDrawStep;
-	WaitForSeconds waitForSnapStep;
-
-
-	float startPoint;
-	Vector3 currentDoorDirection;
-	Vector3 rayDirection;
 	float angleIncrement;
+	float snapTowards;
+	float startPoint;
 	float angleMin;
 	float angleMax;
+
+	Vector3 currentDoorDirection;
 	Camera cam;
+	
+	WaitForSeconds waitForDrawStep;
+	WaitForSeconds waitForSnapStep;
 
     private void Awake()
     {
@@ -52,13 +54,14 @@ public class DoorOpener : MonoBehaviour
 	}
 
 	GameObject sphere;
+	const float extraRadiusSpace = 0.3f;
 	
     public void Start(){
 		
 		sphere = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
 		sphere.transform.position = doorContainer.position;
 		float radius = (handle.position - doorContainer.position).magnitude;
-		sphere.transform.localScale = new Vector3(sphere.transform.localScale.x*(radius*2 + 0.3f), doorHeight, sphere.transform.localScale.z*(radius*2 + 0.3f));
+		sphere.transform.localScale = new Vector3(sphere.transform.localScale.x*(radius*2 + extraRadiusSpace), doorHeight, sphere.transform.localScale.z*(radius*2 + 0.3f));
 		sphere.GetComponent<Renderer>().enabled = false;
 		
 		sphere.AddComponent<MeshCollider>();
@@ -85,12 +88,6 @@ public class DoorOpener : MonoBehaviour
 		waitForSnapStep = new WaitForSeconds(snapTimeStep);
 
 		Debuger("angleMin:" + angleMin + "; angleMax:" + angleMax);
-
-		//TESTS
-		/*var planeSpawnPoint = handle.position;
-		Vector3 slideSurfaceDirection = (cam.transform.position - planeSpawnPoint).normalized;
-		currentDoorDirection = planeSpawnPoint - doorContainer.position;
-		slideSurface = new Plane(slideSurfaceDirection, planeSpawnPoint);*/
 	}
 
 	void Update()
@@ -168,7 +165,7 @@ public class DoorOpener : MonoBehaviour
 		yield return waitForDrawStep;
 
 		//Vector that points to the new direction to rotate
-		rayDirection = GetMousePositionOverSlideSurface() - doorContainer.position;
+		Vector3 rayDirection = GetMousePositionOverSlideSurface() - doorContainer.position;
 		rayDirection.y=0;
 
 		//currentDoorDirection is a Vector that points to the direction before rotating
@@ -296,12 +293,21 @@ public class DoorOpener : MonoBehaviour
             Debug.DrawLine(_from, _to, Color.red, 10f);
     }
 	
+	
     void OnDrawGizmosSelected()
     {
         if (showDebugs){
-			Gizmos.color = Color.green;
-			Gizmos.DrawWireSphere(doorContainer.position, (handle.position - doorContainer.position).magnitude);
-			Gizmos.DrawLine(Camera.main.transform.position, handle.position);
+			if(doorContainer != null && handle != null){
+				float radius = (handle.position - doorContainer.position).magnitude + extraRadiusSpace;
+				Vector3 halfHeight = Vector3.up*doorHeight;
+				
+				Gizmos.color = Color.green;
+				Gizmos.DrawLine(Camera.main.transform.position, handle.position);
+				Handles.color = Color.green;
+				Handles.DrawWireArc(doorContainer.position, Vector3.up, Vector3.right, 360, radius);
+				Handles.DrawWireArc(doorContainer.position + halfHeight, Vector3.up, Vector3.right, 360, radius);
+				Handles.DrawWireArc(doorContainer.position - halfHeight, Vector3.up, Vector3.right, 360, radius);
+			}
 		}
     }
 }
