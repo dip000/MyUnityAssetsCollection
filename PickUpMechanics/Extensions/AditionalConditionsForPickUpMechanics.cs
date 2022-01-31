@@ -20,7 +20,6 @@ public class AditionalConditionsForPickUpMechanics : MonoBehaviour {
 	
 	
 	bool EvaluatePickUpCondition(){
-		bool result = false;
 		Pickupable target = PickUpMechanics.targetTransform.GetComponent<Pickupable>();
 		Container container = target.myContainer;
 		bool[,] map = ArrayHolderRegister.occupancyMap;

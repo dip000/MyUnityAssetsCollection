@@ -98,7 +98,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		//TODO: position the object in the average of all its containers
 		foreach(var obj in objects)
 		{
-		  obj.Key.coordenates = obj.Value.ToArray();
+		  obj.Key.SetCoordenates(obj.Value.ToArray());
 		  //obj.Key.transform.position = obj.Value.Aggregate(Vector3.zero, (acc, v) => acc + v) / obj.Value.Count;
 		}
 		
@@ -190,7 +190,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		coordenatesToUpdate[0] = container.coordenates;
 		//CoordenatesToObjectShape(coordenatesToUpdate);
 		
-		item.coordenates = coordenatesToUpdate;
+		item.SetCoordenates( coordenatesToUpdate );
 		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, occupied);
 		
 		//Update object's coordenates
