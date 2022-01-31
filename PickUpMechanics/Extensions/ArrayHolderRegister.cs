@@ -5,7 +5,7 @@ using System.Linq;
 
 public class ArrayHolderRegister : MonoBehaviour {
 
-	[HideInInspector] public Container[] containers;
+	public static Container[] containers;
 	public static bool[,] occupancyMap;
 	
 	const bool occupied = true;
@@ -120,19 +120,77 @@ public class ArrayHolderRegister : MonoBehaviour {
 		
 		Debuger("Occupancy array of dimentions: " + xLength + ", " + yLength );
 	}
+	
+	Vector3 average;
+	bool[,] CoordenatesToObjectShape(Vector3[] coordenates){
+		Vector3 refCoordenate = coordenates[0];
+		Vector3 smallestPosition = new Vector3(1024,1024,0);
+		Vector3 bigestPosition = new Vector3(-1024,-1024,0);
+		
+		for(int i=0; i<coordenates.Length; i++){
+			//rebuild coordenates locally
+			coordenates[i] -= refCoordenate;
+			
+			//Find smallest position
+			if(coordenates[i].x < smallestPosition.x){
+				smallestPosition.x = coordenates[i].x;
+			}
+			if(coordenates[i].y < smallestPosition.y){
+				smallestPosition.y = coordenates[i].y;
+			}
+			
+			//Find bigest position
+			if(coordenates[i].x > bigestPosition.x){
+				bigestPosition.x = coordenates[i].x;
+			}
+			if(coordenates[i].y > bigestPosition.y){
+				bigestPosition.y = coordenates[i].y;
+			}
+		}
+		
+		int xSize = (int)bigestPosition.x - (int)smallestPosition.x +1;
+		int ySize = (int)bigestPosition.y - (int)smallestPosition.y +1;
+		Debuger("smallestPosition: " + smallestPosition + "; bigestPosition:" + bigestPosition);
+		Debuger("xSize: " + xSize + "; ySize:" + ySize);
+		
+		//Move coordenates to local origin and build occupancy map
+		bool[,] shape = new bool[xSize, ySize];
+		average = Vector3.zero;
+		for(int i=0; i<coordenates.Length; i++){
+			coordenates[i] += (-smallestPosition);
+			Debuger("map["+i+"]: " + coordenates[i]);
+			shape[(int)coordenates[i].x, (int)coordenates[i].y] = true;
+			
+			average += coordenates[i];
+		}
+		
+		//discrete center of volume
+		average /= coordenates.Length;
+		Debuger("average: " + average);
+		average.x = (average.x-(int)average.x<0.5f)?(int)average.x:(int)average.x+1;
+		average.y = (average.y-(int)average.y<0.5f)?(int)average.y:(int)average.y+1;
+		Debuger("discrete average: " + average);
+		return shape;
+	}
 
 	
 	void OnPickUp(){
 		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
 		Vector3[] coordenatesToUpdate = item.coordenates;
 		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, free);
-
+		CoordenatesToObjectShape(coordenatesToUpdate);
 	}
 	
 	void OnDrop(){
-		//WARNING! handObject is alreadyNull at his point
 		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
-		Vector3[] coordenatesToUpdate = item.coordenates;
+		Container container = PickUpMechanics.targetTransform.GetComponent<Container>();
+		
+		//Test
+		Vector3[] coordenatesToUpdate = new Vector3[1];
+		coordenatesToUpdate[0] = container.coordenates;
+		//CoordenatesToObjectShape(coordenatesToUpdate);
+		
+		item.coordenates = coordenatesToUpdate;
 		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, occupied);
 		
 		//Update object's coordenates

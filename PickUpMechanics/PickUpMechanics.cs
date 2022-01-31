@@ -132,7 +132,7 @@ public class PickUpMechanics : MonoBehaviour
         //Move object to container and parent it
         handObject.position = targetTransform.position;
         handObject.parent = targetTransform;
-        handObject = null;
+        //handObject = null;
 
         hasObjectOnHand = false;
 
