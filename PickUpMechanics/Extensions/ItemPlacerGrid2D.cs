@@ -12,62 +12,76 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	Transform[] instances;
 	
 	//TEST
-	public int[] itemIndexes = {0};
-	public Vector2[] positionIndexes = {Vector2.zero};
+	public int[] itemInstructionIndexes = {0};
+	public Vector2[] itemPositions = {Vector2.zero};
 	public int[] itemRotations = {0};
 
 
-    public void Setup(Items[] _items)
+    public void Setup(Items[] _items, int[] _itemIndexes, Vector2[] _positionIndexes, int[] _itemRotations)
     {
 		items = _items;
+		itemInstructionIndexes = _itemIndexes;
+		itemPositions = _positionIndexes;
+		itemRotations = _itemRotations;
 	}
 
     [ContextMenu("Place Items")]
 	public void PlaceItems(){
 
 		//ResetItems();
-		instances = new Transform[ itemIndexes.Length ];
+		instances = new Transform[ itemInstructionIndexes.Length ];
 		
 		var placeholder = GameObject.CreatePrimitive(PrimitiveType.Cube);
 		placeholder.name = "Original Item";
 		
 		gridBuilder = GetComponent<GridBuilder2D>();
 		
-		for(int i=0; i<itemIndexes.Length; i++){
-			var itemIndex = itemIndexes[i];
+		for(int i=0; i<itemInstructionIndexes.Length; i++){
+			var itemIndex = itemInstructionIndexes[i];
 			var item = items[ itemIndex ];
 			var graphics = item.graphics;
-			
+
+
 			if(graphics == null){
 				Debuger("No graphics to use as item. Will use a placeholder");
 				graphics = placeholder;
 			}
 			
+			//Only by 90 degrees and max 3 times
+			int rotationTimes = (int) (itemRotations[i] / 90) % 4;
+			int rotationAngleClamp = rotationTimes * 90;
+
+			//Rotate and Globalize coordenates
 			Vector2 sum = Vector2.zero;
-			Vector2[] globalCoordenates = GlobalizeCoordenatesAndFindAverage( item.localCoordenates, positionIndexes[i], ref sum);
-			globalCoordenates = RotateMatrix( globalCoordenates );
-			
-			int xIndex = (int)positionIndexes[i].x;
-			int yIndex = (int)positionIndexes[i].y;
-			
-			Vector3 position = sum * 0.5f + positionIndexes[i];
+			Vector2[] localCoordenates = RotateMatrixTimes(item.localCoordenates, rotationTimes);
+			Vector2[] globalCoordenates = GlobalizeCoordenatesAndFindAverage(localCoordenates, itemPositions[i], ref sum);
+
+			//average local position and globalize to array of containers
+			//then globalize to world coordenates adding holderContainers.position
+			Vector3 position = sum * 0.5f + itemPositions[i];
 			position.z = position.y;
 			position.y = 0;
 			position += gridBuilder.instances[0,0].position;
-			
+
+			int xIndex = (int)itemPositions[i].x;
+			int yIndex = (int)itemPositions[i].y;
+
+			//Apply transforms and properties
 			Transform parent = gridBuilder.instances[xIndex, yIndex];
-			GameObject instance = Instantiate(graphics, position, Quaternion.Euler(0, itemRotations[i], 0) );
+			GameObject instance = Instantiate(graphics, position, Quaternion.Euler(0, rotationAngleClamp, 0) );
 			instance.name = item.itemName;
 			instance.AddComponent<Pickupable>();
 
+			//Setup components and internal logic
 			Pickupable instanceComponent = instance.GetComponent<Pickupable>();
 			Container container = parent.GetComponent<Container>();
-			
+
 			instanceComponent.myName = item.itemName;
 			instanceComponent.SetCoordenates( globalCoordenates );
 			instanceComponent.SetOccupancy( container );
 			container.SetOccupancy( instanceComponent );
-			
+
+			//Save as a reference
 			instances[i] = instance.transform;
 			Debuger("Placed " + item.itemName + " in position " + position + " and rotation " + itemRotations[i]);
 		}
@@ -87,14 +101,45 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			
 		return coordenates;
 	}
-	
-	Vector2[] RotateMatrix(Vector2[] matrix){
-		return matrix;
+
+	Vector2[] RotateMatrixTimes(Vector2[] vector, int times) {
+
+		Vector2[] vectorOut = new Vector2[vector.Length];
+		vector.CopyTo(vectorOut, 0);
+
+		for (int rotateTimes = 0; rotateTimes< times; rotateTimes++) {
+			float xMax = 0;
+
+			ArrayDebuger(vectorOut, "vectorOut before matrix rotation: ");
+
+			//Mirror on 45 degrees
+			for (int i = 0; i < vectorOut.Length; i++)
+			{
+				float xTemp = vectorOut[i].x;
+				vectorOut[i].x = vectorOut[i].y;
+				vectorOut[i].y = xTemp;
+
+				//A reference to mirror the Y axis
+				if (vectorOut[i].x > xMax)
+				{
+					xMax = vectorOut[i].x;
+				}
+			}
+
+			//Mirror on Y axis
+			for (int i = 0; i < vectorOut.Length; i++)
+			{
+				vectorOut[i].x = xMax - vectorOut[i].x;
+			}
+
+			ArrayDebuger(vectorOut, "vectorOut  after matrix rotation: ");
+		}
+
+		Debuger("Rotated vector " + times + " times");
+		return vectorOut;
 	}
-	
-	
-	
-	
+
+
 	[ContextMenu("Reset Items")]
 	void ResetItems(){
 		if(instances== null)
@@ -116,10 +161,10 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	[System.Serializable]
 	public class Items {
 		public string itemName;
-		public Vector2[] localCoordenates;
 		public GameObject graphics;
+		public Vector2[] localCoordenates;
 	}
 
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
-
+	void ArrayDebuger(Vector2[] vectorArray, string text="ArrayDebuger") { if (showDebugs) for (int i=0; i<vectorArray.Length; i++) Debug.Log(text + " ["+i+"] " + vectorArray[i]); }
 }

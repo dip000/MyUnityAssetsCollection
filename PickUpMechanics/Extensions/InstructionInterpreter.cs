@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class InstructionInterpreter : MonoBehaviour
 {
-    public TextAsset project;
+    public TextAsset configurationsFile;
 
     public string projectName;
     public int numberOfMaps;
@@ -25,9 +25,24 @@ public class InstructionInterpreter : MonoBehaviour
 
     void Start()
     {
-        gridBuilder2D.Setup(maps[0].size, new Vector2(0.5f, 0.5f), 0.5f);
+        MakeLevel(0);
+    }
 
-        itemPlacerGrid2D.Setup(items);
+    public void MakeLevel(int level)
+    {
+        int instructions = maps[level].itemInstructionIndexes.Length;
+
+        if (maps[level].itemPositions.Length != instructions)
+        {
+            Debug.LogWarning("INSTRUCTION INTERPRETER. itemPositions has " + maps[level].itemPositions.Length + " out of " + instructions + " positions. Must be same");
+        }
+        if (maps[level].itemRotations.Length != instructions)
+        {
+            Debug.LogWarning("INSTRUCTION INTERPRETER. itemRotations has " + maps[level].itemRotations.Length + " out of " + instructions + " rotations. Must be same");
+        }
+
+        gridBuilder2D.Setup(maps[level].mapSize, new Vector2(0.9f, 0.9f), 0.1f);
+        itemPlacerGrid2D.Setup(items, maps[level].itemInstructionIndexes, maps[level].itemPositions, maps[level].itemRotations);
 
         gridBuilder2D.BuildGrid();
         itemPlacerGrid2D.PlaceItems();
@@ -38,8 +53,9 @@ public class InstructionInterpreter : MonoBehaviour
     public class Maps
     {
         public string mapName;
-        public int[] itemInstructionIndex;
-        public Vector2[] itemPositionIndex;
-        public Vector2 size;
+        public int[] itemInstructionIndexes;
+        public Vector2[] itemPositions;
+        public int[] itemRotations;
+        public Vector2 mapSize;
     }
 }
