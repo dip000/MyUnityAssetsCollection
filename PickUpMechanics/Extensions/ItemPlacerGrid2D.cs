@@ -10,6 +10,12 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	public Items[] items;
 	GridBuilder2D gridBuilder;
 	Transform[] instances;
+	
+	//TEST
+	public int[] itemIndexes = {0};
+	public Vector2[] positionIndexes = {Vector2.zero};
+	public int[] itemRotations = {0};
+
 
     public void Setup(Items[] _items)
     {
@@ -18,69 +24,100 @@ public class ItemPlacerGrid2D : MonoBehaviour
 
     [ContextMenu("Place Items")]
 	public void PlaceItems(){
-		ResetItems();
-		instances = new Transform[ items.Length ];
+
+		//ResetItems();
+		instances = new Transform[ itemIndexes.Length ];
 		
 		var placeholder = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		placeholder.AddComponent<Pickupable>();
 		placeholder.name = "Original Item";
 		
 		gridBuilder = GetComponent<GridBuilder2D>();
 		
-		for(int i=0; i<items.Length; i++){
+		for(int i=0; i<itemIndexes.Length; i++){
+			var itemIndex = itemIndexes[i];
+			var item = items[ itemIndex ];
+			var graphics = item.graphics;
 			
-			var graphics = items[i].graphics;
-			
-			if(items[i].graphics == null){
+			if(graphics == null){
 				Debuger("No graphics to use as item. Will use a placeholder");
 				graphics = placeholder;
 			}
 			
-			int xlocation = (int)items[i].location.x;
-			int ylocation = (int)items[i].location.y;
+			Vector2 sum = Vector2.zero;
+			Vector2[] globalCoordenates = GlobalizeCoordenatesAndFindAverage( item.localCoordenates, positionIndexes[i], ref sum);
+			globalCoordenates = RotateMatrix( globalCoordenates );
+			
+			int xIndex = (int)positionIndexes[i].x;
+			int yIndex = (int)positionIndexes[i].y;
+			
+			Vector3 position = sum * 0.5f + positionIndexes[i];
+			position.z = position.y;
+			position.y = 0;
+			position += gridBuilder.instances[0,0].position;
+			
+			Transform parent = gridBuilder.instances[xIndex, yIndex];
+			GameObject instance = Instantiate(graphics, position, Quaternion.Euler(0, itemRotations[i], 0) );
+			instance.name = item.itemName;
+			instance.AddComponent<Pickupable>();
 
-			Transform parent = gridBuilder.instances[xlocation, ylocation];
-			//parents[i] = gridBuilder.instances[xlocation, ylocation];
-			GameObject instance = Instantiate(graphics, parent);
-			instance.name = items[i].name;
-			
 			Pickupable instanceComponent = instance.GetComponent<Pickupable>();
-			instanceComponent.myName = items[i].name;
+			Container container = parent.GetComponent<Container>();
 			
-			Vector3[] coordenates = new Vector3[1];
-			coordenates[0] = (Vector3)items[i].location;
-			instanceComponent.SetCoordenates( coordenates );
+			instanceComponent.myName = item.itemName;
+			instanceComponent.SetCoordenates( globalCoordenates );
+			instanceComponent.SetOccupancy( container );
+			container.SetOccupancy( instanceComponent );
 			
 			instances[i] = instance.transform;
-			
-			Debuger("Placed " + items[i].name + " in " + items[i].location);
+			Debuger("Placed " + item.itemName + " in position " + position + " and rotation " + itemRotations[i]);
 		}
 		
 		
-		placeholder.SetActive(false);
+		DestroyImmediate(placeholder);
 	}
+	
+	
+	Vector2[] GlobalizeCoordenatesAndFindAverage(Vector2[] localCoordenates, Vector2 positionIndex, ref Vector2 sum){
+		Vector2[] coordenates = new Vector2[ localCoordenates.Length ];
+		
+		for(int i=0; i<localCoordenates.Length; i++){
+			coordenates[i] = localCoordenates[i] + positionIndex;
+			sum += localCoordenates[i];
+		}
+			
+		return coordenates;
+	}
+	
+	Vector2[] RotateMatrix(Vector2[] matrix){
+		return matrix;
+	}
+	
+	
+	
 	
 	[ContextMenu("Reset Items")]
 	void ResetItems(){
 		if(instances== null)
 			return;
 		
+		if(instances.Length <= 0)
+			return;
+		
 		foreach(var instance in instances){
-			DestroyImmediate(instance);
+			DestroyImmediate(instance.gameObject);
 		}
 
 		instances = new Transform[0];
 		Debuger("Deleted " + items.Length + " items in scene");
 	}
 	
+	
+	
 	[System.Serializable]
 	public class Items {
-		public string name;
+		public string itemName;
+		public Vector2[] localCoordenates;
 		public GameObject graphics;
-		public Vector2 location;
-
-		//public string itemName;
-		//public bool[,] shape;
 	}
 
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }

@@ -5,9 +5,9 @@ using UnityEngine;
 [DefaultExecutionOrder(-200)]
 public class GridBuilder2D : MonoBehaviour
 {
-	public Vector2 containers = new Vector2(2,2);
-	public Vector2 containersSize = new Vector2(1,1);
-	public float margin = 0.0f;
+	public Vector2 containers = new Vector2(3,2);
+	public Vector2 containersSize = new Vector2(0.8f,0.8f);
+	public float margin = 0.2f;
 	
 	public GameObject containerGraphics;
 	public GameObject holderOfContainers;
@@ -15,9 +15,9 @@ public class GridBuilder2D : MonoBehaviour
 	public Transform[,] instances {get; private set;}
 	
 	
-	GameObject graphics;
+	
 	GameObject graphicsParent;
-    [ContextMenu("Build Grid")]
+	
     private void Awake()
     {
 	}
@@ -29,16 +29,18 @@ public class GridBuilder2D : MonoBehaviour
 		margin = _margin;
 	}
 
+    [ContextMenu("Build Grid")]
 	public void BuildGrid(){
-		ResetGrid();
+		Debuger("Building Grid..");		
 		
-		graphics = containerGraphics;
+		var placeHolder = GameObject.CreatePrimitive(PrimitiveType.Cube);
+		var graphics = containerGraphics;
 		graphicsParent = holderOfContainers;
 		instances = new Transform[ (int)containers.x,(int)containers.y ];
 		
 		if(containerGraphics == null){
 			Debuger("No graphics to use as containers. Will use placeholders");
-			graphics = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			graphics = placeHolder;
 			graphics.AddComponent<Container>();
 			graphics.name = "Original Container";
 		}
@@ -64,15 +66,15 @@ public class GridBuilder2D : MonoBehaviour
 				instance.transform.position = objectPosition;
 				
 				Container instanceComponent = instance.GetComponent<Container>();
-				instanceComponent.coordenates = new Vector3(i, j, 0);
-				instanceComponent.detectionRadius = detectionRadius;
+				instanceComponent.coordenates = new Vector2(i, j);
 				
 				instances[i, j] = instance.transform;
 			}
 		}
 		
 		
-		graphics.SetActive(false);
+		DestroyImmediate(placeHolder);
+		Debuger("Grid Built");		
 	}
 	
 	[ContextMenu("Reset Grid")]
@@ -87,7 +89,6 @@ public class GridBuilder2D : MonoBehaviour
 			}
 		}
 
-		DestroyImmediate(graphics);
 		DestroyImmediate(graphicsParent);
 		instances = new Transform[0,0];
 	}

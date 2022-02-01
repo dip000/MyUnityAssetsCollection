@@ -6,7 +6,7 @@ public class Pickupable : MonoBehaviour
 {
 	
     public string myName = "ObjectX";
-    public Vector3[] coordenates { get; private set; }
+    public Vector2[] coordenates { get; private set; }
     public Container myContainer { get; private set; }
 	
 	public void ResetOccupancy(){
@@ -17,7 +17,7 @@ public class Pickupable : MonoBehaviour
 		myContainer = _myContainer;
 	}
 	
-	public void SetCoordenates(Vector3[] _coordenates){
+	public void SetCoordenates(Vector2[] _coordenates){
 		coordenates = _coordenates;
 	}
 }

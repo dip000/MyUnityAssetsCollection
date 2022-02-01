@@ -5,11 +5,7 @@ using UnityEngine;
 public class Container : MonoBehaviour
 {
 
-	public Vector3 coordenates;
-
-    [Header("DO NOT overlap Container's radiuses!")]
-    public float detectionRadius = 1.0f;
-
+	public Vector2 coordenates;
 
     bool isOccupied = false;
     public Pickupable objectInside { get; private set; }
@@ -22,47 +18,6 @@ public class Container : MonoBehaviour
 	const bool occupied = true;
 	const bool free = false;
 
-
-    // Start is called before the first frame update
-    void Start()
-    {
-		InitializeValues();
-	}
-	
-	void InitializeValues(){
-		objectInside = AutoFindItemNearby();
-		
-		if(objectInside == null){
-			isOccupied = false;
-		}
-		else{
-			isOccupied = true;
-			objectInside.SetOccupancy( this );
-			
-			if(yieldControlToExternal == false){
-				objectInside.transform.position = transform.position;
-				objectInside.transform.parent = transform;
-			}
-		}
-		
-		finishedInitializing = true;
-	}
-	
-	Pickupable AutoFindItemNearby(){
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, detectionRadius);
-
-        for (int i=0; i< hitColliders.Length; i++)
-        {
-            Pickupable testObjectInside = hitColliders[i].GetComponent<Pickupable>();
-            if(testObjectInside != null)
-            {
-                Debuger("" + transform.name + " Has auto detected " + testObjectInside.transform.name);
-                return testObjectInside;
-            }
-        }
-		
-		return null;
-	}
 
     public void ResetOccupancy()
     {
@@ -99,13 +54,4 @@ public class Container : MonoBehaviour
 
     [Header("Check to visualize detection radius")]
     public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
-
-    void OnDrawGizmosSelected()
-    {
-        if (showDebugs)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, detectionRadius);
-        }
-    }
 }

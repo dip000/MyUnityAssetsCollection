@@ -38,7 +38,8 @@ public class InstructionInterpreter : MonoBehaviour
     public class Maps
     {
         public string mapName;
-        public int[] itemIndex;
+        public int[] itemInstructionIndex;
+        public Vector2[] itemPositionIndex;
         public Vector2 size;
     }
 }

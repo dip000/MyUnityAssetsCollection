@@ -71,7 +71,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 	
 	void FindObjecCoordenates(){
 
-		Dictionary< Pickupable, List<Vector3> > objects = new Dictionary< Pickupable, List<Vector3> >();
+		Dictionary< Pickupable, List<Vector2> > objects = new Dictionary< Pickupable, List<Vector2> >();
 		
 		
 		//Saves objects like:
@@ -84,7 +84,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 						
 			if(currentItem != null){
 				if( objects.ContainsKey(currentItem) == false ){
-					objects[currentItem] = new List<Vector3>();
+					objects[currentItem] = new List<Vector2>();
 				}
 				
 				objects[currentItem].Add(currentContainer.coordenates);
@@ -99,7 +99,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		foreach(var obj in objects)
 		{
 		  obj.Key.SetCoordenates(obj.Value.ToArray());
-		  //obj.Key.transform.position = obj.Value.Aggregate(Vector3.zero, (acc, v) => acc + v) / obj.Value.Count;
+		  //obj.Key.transform.position = obj.Value.Aggregate(Vector2.zero, (acc, v) => acc + v) / obj.Value.Count;
 		}
 		
 	}
@@ -121,11 +121,11 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Debuger("Occupancy array of dimentions: " + xLength + ", " + yLength );
 	}
 	
-	Vector3 average;
-	bool[,] CoordenatesToObjectShape(Vector3[] coordenates){
-		Vector3 refCoordenate = coordenates[0];
-		Vector3 smallestPosition = new Vector3(1024,1024,0);
-		Vector3 bigestPosition = new Vector3(-1024,-1024,0);
+	Vector2 average;
+	bool[,] CoordenatesToObjectShape(Vector2[] coordenates){
+		Vector2 refCoordenate = coordenates[0];
+		Vector2 smallestPosition = new Vector2(1024,1024);
+		Vector2 bigestPosition = new Vector2(-1024,-1024);
 		
 		for(int i=0; i<coordenates.Length; i++){
 			//rebuild coordenates locally
@@ -155,7 +155,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		
 		//Move coordenates to local origin and build occupancy map
 		bool[,] shape = new bool[xSize, ySize];
-		average = Vector3.zero;
+		average = Vector2.zero;
 		for(int i=0; i<coordenates.Length; i++){
 			coordenates[i] += (-smallestPosition);
 			Debuger("map["+i+"]: " + coordenates[i]);
@@ -176,7 +176,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 	
 	void OnPickUp(){
 		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
-		Vector3[] coordenatesToUpdate = item.coordenates;
+		Vector2[] coordenatesToUpdate = item.coordenates;
 		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, free);
 		CoordenatesToObjectShape(coordenatesToUpdate);
 	}
@@ -186,7 +186,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Container container = PickUpMechanics.targetTransform.GetComponent<Container>();
 		
 		//Test
-		Vector3[] coordenatesToUpdate = new Vector3[1];
+		Vector2[] coordenatesToUpdate = new Vector2[1];
 		coordenatesToUpdate[0] = container.coordenates;
 		//CoordenatesToObjectShape(coordenatesToUpdate);
 		
@@ -197,7 +197,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 
 	}
 	
-	void UpdateCoordenatesInOccupancyMap(Vector3[] coordenates, bool state){
+	void UpdateCoordenatesInOccupancyMap(Vector2[] coordenates, bool state){
 		for(int i=0; i<coordenates.Length; i++){
 			occupancyMap[(int)coordenates[i].x, (int)coordenates[i].y] = state;
 		}
