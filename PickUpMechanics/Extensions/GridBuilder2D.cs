@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+[DefaultExecutionOrder(-200)]
 public class GridBuilder2D : MonoBehaviour
 {
 	public Vector2 containers = new Vector2(2,2);
@@ -14,12 +14,22 @@ public class GridBuilder2D : MonoBehaviour
 
 	public Transform[,] instances {get; private set;}
 	
- 
 	
 	GameObject graphics;
 	GameObject graphicsParent;
-	[ContextMenu("Build Grid")]
-	void BuildGrid(){
+    [ContextMenu("Build Grid")]
+    private void Awake()
+    {
+	}
+
+	public void Setup(Vector2 _containers, Vector2 _containersSize, float _margin)
+    {
+		containers = _containers;
+		containersSize = _containersSize;
+		margin = _margin;
+	}
+
+	public void BuildGrid(){
 		ResetGrid();
 		
 		graphics = containerGraphics;
@@ -73,9 +83,13 @@ public class GridBuilder2D : MonoBehaviour
 		Debuger("Grid Reseted");
 		for(int i=0; i<instances.GetLength(0); i++){			
 			for(int j=0; j<instances.GetLength(1); j++){
-				DestroyImmediate(instances[i,j]);
+				DestroyImmediate(instances[i,j].gameObject);
 			}
 		}
+
+		DestroyImmediate(graphics);
+		DestroyImmediate(graphicsParent);
+		instances = new Transform[0,0];
 	}
 	
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+[DefaultExecutionOrder(-100)]
 [RequireComponent(typeof(GridBuilder2D))]
 public class ItemPlacerGrid2D : MonoBehaviour
 {
@@ -10,9 +10,14 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	public Items[] items;
 	GridBuilder2D gridBuilder;
 	Transform[] instances;
-	
-	[ContextMenu("Place Items")]
-	void PlaceItems(){
+
+    public void Setup(Items[] _items)
+    {
+		items = _items;
+	}
+
+    [ContextMenu("Place Items")]
+	public void PlaceItems(){
 		ResetItems();
 		instances = new Transform[ items.Length ];
 		
@@ -33,8 +38,9 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			
 			int xlocation = (int)items[i].location.x;
 			int ylocation = (int)items[i].location.y;
-			
+
 			Transform parent = gridBuilder.instances[xlocation, ylocation];
+			//parents[i] = gridBuilder.instances[xlocation, ylocation];
 			GameObject instance = Instantiate(graphics, parent);
 			instance.name = items[i].name;
 			
@@ -56,12 +62,14 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	
 	[ContextMenu("Reset Items")]
 	void ResetItems(){
-		if(instances.Length <= 0)
+		if(instances== null)
 			return;
 		
 		foreach(var instance in instances){
 			DestroyImmediate(instance);
 		}
+
+		instances = new Transform[0];
 		Debuger("Deleted " + items.Length + " items in scene");
 	}
 	
@@ -70,8 +78,11 @@ public class ItemPlacerGrid2D : MonoBehaviour
 		public string name;
 		public GameObject graphics;
 		public Vector2 location;
+
+		//public string itemName;
+		//public bool[,] shape;
 	}
-	
+
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 
 }
