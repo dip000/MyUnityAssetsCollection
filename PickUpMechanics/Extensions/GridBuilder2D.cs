@@ -13,9 +13,7 @@ public class GridBuilder2D : MonoBehaviour
 	public GameObject holderOfContainers;
 
 	public Container[,] instances {get; private set;}
-	
-	
-	
+
 	public GameObject graphicsParent;
 	
     private void Awake()
@@ -53,6 +51,7 @@ public class GridBuilder2D : MonoBehaviour
 		float detectionRadius = (containersSize.x < containersSize.y) ? containersSize.x : containersSize.y;
 		detectionRadius *= 0.5f;
 		graphicsParent.AddComponent<ArrayHolderRegister>();
+		graphicsParent.AddComponent<AditionalConditionsForPickUpMechanics>();
 
 		for (int i=0; i<containers.x; i++){			
 			for(int j=0; j<containers.y; j++){

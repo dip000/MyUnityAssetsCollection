@@ -9,25 +9,33 @@ public class AditionalConditionsForPickUpMechanics : MonoBehaviour {
 	
 	public bool DropCondition { get{ return EvaluateDropCondition(); } }
 	
-	const bool free = false;
-	const bool occupied = true;
-
+	ArrayHolderRegister arrayHolderRegister;
+	
 	void Awake(){
+		arrayHolderRegister = GetComponent<ArrayHolderRegister>();
+		
 		PickUpMechanics.ListenPickupConditionFrom( this, "PickUpCondition");
-
 		PickUpMechanics.ListenDropConditionFrom( this, "DropCondition");
 	}
 	
-	
+	Pickupable item;
+	Container container;
+	bool[,] map;
 	bool EvaluatePickUpCondition(){
-		Pickupable target = PickUpMechanics.targetPickupable;
-		Container container = target.myContainer;
-		bool[,] map = ArrayHolderRegister.occupancyMap;
-		//Container[] containers = ArrayHolderRegister.containers;
+		UpdateLookUpVariables();
 		
+		if( EvaluateFridgePickUpConditions() ){
+			return true;
+		}
+		
+		return false;
+	}
+	
+	bool EvaluateFridgePickUpConditions(){
 		// If item have at least one part in frontal row, pick up inconditionally
-		for(int i=0; i<target.coordenates.Length; i++){
-			if( (int)target.coordenates[i].y == 0 ){
+		for(int i=0; i<item.coordenates.Length; i++){
+			if( (int)item.coordenates[i].y == 0 ){
+				Debuger("Pick up condition of being in front row was a success");
 				return true;
 			}
 		}
@@ -35,31 +43,71 @@ public class AditionalConditionsForPickUpMechanics : MonoBehaviour {
 		//Must be at least one free slot in front of container (assuming target is at the back because of previous condition)
 		int x = (int)container.coordenates.x;
 		int y = (int)container.coordenates.y-1;
-		if( map[x, y] == free){
+		if( map[x, y] == PickUpMechanics.free){
+			Debuger("Pick up condition of have free a slot in frnt row was a success");
 			return true;
 		}
 		
+		Debuger("Pick up was not in front nor had a free slot in front");		
 		return false;
 	}
 	
 	bool EvaluateDropCondition(){
-		bool result = true;
-		Container container = PickUpMechanics.targetContainer;
-		Pickupable item = container.objectInside;
-		bool[,] map = ArrayHolderRegister.occupancyMap;
-		//Container[] containers = ArrayHolderRegister.containers;
+		UpdateLookUpVariables();
 		
+		if(EvaluateFridgeDropConditions() == false){
+			return false;
+		}
+
+		if(EvaluateOccupancyConditions() == false){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	bool EvaluateFridgeDropConditions(){
 		//If target is at the back
 		if((int)container.coordenates.y == 1){
 			//Must be at least one free slot in front of container
 			int x = (int)container.coordenates.x;
 			int y = (int)container.coordenates.y-1;
-			result = (map[x, y] == free);
+			Debuger("Trying to Drop at the back and resulted: " + (map[x, y] == PickUpMechanics.free));
+			return (map[x, y] == PickUpMechanics.free);
 		}
 		
-		return result;
+		Debuger("Did not dropped at the back, evaluating next condition..");
+		return true;
 	}
 	
-	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
+	bool EvaluateOccupancyConditions(){
+		Vector2[] globalCoordenates = arrayHolderRegister.GlobalizeCoordenates(arrayHolderRegister.localCoordenates, PickUpMechanics.targetContainer.coordenates);
+		
+		for(int i=0; i<globalCoordenates.Length; i++){
+			int x = (int) globalCoordenates[i].x;
+			int y = (int) globalCoordenates[i].y;
+			
+			if( x > (map.GetLength(0)-1) || y > (map.GetLength(1)-1) ){
+				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is outside of bounds");
+				return false;
+			}
+			
+			if( map[x, y] != false ){
+				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is occupied");
+				return false;
+			}
+		}
+		
+		Debuger("Occupancy condition met");
+		return true;
+	}
+	
+	void UpdateLookUpVariables(){
+		item = PickUpMechanics.targetPickupable;
+		container = PickUpMechanics.targetContainer;
+		map = ArrayHolderRegister.occupancyMap;
+	}
+	
+	public bool showDebugs=true; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 
 }

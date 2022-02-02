@@ -24,6 +24,6 @@ public class Pickupable : MonoBehaviour
 	public void AcomodateInMyContainer()
 	{
 		transform.position = myContainer.transform.position;
-		transform.parent = myContainer.transform;
+		//transform.parent = myContainer.transform;
 	}
 }

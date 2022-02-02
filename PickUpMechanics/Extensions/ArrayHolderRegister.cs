@@ -24,7 +24,6 @@ public class ArrayHolderRegister : MonoBehaviour {
 		}
 
 		containers = _containers;
-		occupancyMap = new bool[containers.GetLength(0), containers.GetLength(1)];
 	}
 
 	public void SetupContainers(){
@@ -34,6 +33,8 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Debuger("Containers Setted up");
 	}
 	
+	
+	public Vector2[] localCoordenates;
 	void OnPickUp(){
 		Pickupable item = PickUpMechanics.targetPickupable;
 		Container container = PickUpMechanics.targetContainer;
@@ -42,39 +43,76 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Vector2 indexCoordenates = container.coordenates;
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.free);
 
-		Vector2[] localCoordenates;
 		localCoordenates = LocalizeCoordenates(globalCoordenates, indexCoordenates);
 	}
 	
 	void OnDrop(){
-		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
+		Pickupable item = PickUpMechanics.handObject;
 		Container container = PickUpMechanics.targetContainer;
 		
-		//Test
-		Vector2[] coordenatesToUpdate = new Vector2[1];
-		coordenatesToUpdate[0] = container.coordenates;
-		//CoordenatesToObjectShape(coordenatesToUpdate);
+		Vector2 indexCoordenates = container.coordenates;
+		Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenates);
+		ArrayDebuger(localCoordenates, "Local coordenates test");
 		
-		item.SetCoordenates( coordenatesToUpdate );
-		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, PickUpMechanics.occupied);
+		item.SetCoordenates( globalCoordenates );
+		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.occupied);
 		
-		//Update object's coordenates
-
+        item.transform.position = ContainerToWorldSpacePosition( container );
+        item.transform.parent = container.transform;
+		
+	}
+	
+	public Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 referenceCoordenate){
+		Vector2[] globalizedCoordenates = new Vector2[localCoordenates.Length];
+		localCoordenates.CopyTo(globalizedCoordenates, 0);
+		
+		globalizedCoordenates = ReferenceCoordenates(globalizedCoordenates, referenceCoordenate);
+		ArrayDebuger(globalizedCoordenates, "Globalized coordenates of item in hand");
+		return globalizedCoordenates;
 	}
 
-	Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 indexCoordenate)
+	Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 referenceCoordenate)
     {
-		Vector2[] localizedCoordenates = new Vector2[globalCoordenates.Length];
+		ReferenceCoordenates(globalCoordenates, -referenceCoordenate);
+		ArrayDebuger(globalCoordenates, "Localized coordenates of item in hand");
+		return globalCoordenates;
+	}
+	
+	Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 referenceCoordenate)
+    {
+		Vector2[] localizedCoordenates = new Vector2[coordenates.Length];
+		localizedCoordenates = coordenates;
 
-		for (int i=0; i< globalCoordenates.Length; i++)
+		for (int i=0; i< coordenates.Length; i++)
         {
-			localizedCoordenates[i] -= indexCoordenate;
+			localizedCoordenates[i] += referenceCoordenate;
 		}
 
 		return localizedCoordenates;
-
 	}
 
+	Vector2 AverageOfCoordenates(Vector2[] coordenates){
+		Vector2 averageOfLocalCoordenates = Vector2.zero;
+		for (int i=0; i< coordenates.Length; i++)
+        {
+			averageOfLocalCoordenates += coordenates[i];
+		}
+		
+		averageOfLocalCoordenates /= coordenates.Length;
+
+		return averageOfLocalCoordenates;
+	}
+	
+	Vector3 ContainerToWorldSpacePosition(Container container){
+		Vector3 average = AverageOfCoordenates(localCoordenates);
+		average.z = average.y;
+		average.y = 0;
+		Vector3 worldSpacePosition = average + container.transform.position;
+		
+		Debuger("average of placed object: " + average + "; worldSpacePosition: " + worldSpacePosition);
+		return worldSpacePosition;
+	}
+	
 	/*public void PlaceObjectInGrid(int i)
 	{
 		//Only by 90 degrees and max 3 times
@@ -98,14 +136,20 @@ public class ArrayHolderRegister : MonoBehaviour {
 	}*/
 
 	void UpdateCoordenatesInOccupancyMap(Vector2[] coordenates, bool state){
-		for(int i=0; i<coordenates.Length; i++){
-			occupancyMap[(int)coordenates[i].x, (int)coordenates[i].y] = state;
-			Debuger("Updated " + coordenates[i]);
-		}
 		
-		Debuger("Updated " + coordenates.Length + " coordenates in occupancy map to the state: " + state);
+		try{
+			for(int i=0; i<coordenates.Length; i++){
+				occupancyMap[(int)coordenates[i].x, (int)coordenates[i].y] = state;
+				Debuger("Updated["+i+"]coordenate in map: " + coordenates[i]);
+			}
+			
+			Debuger("Updated " + coordenates.Length + " coordenates in occupancy map to the state: " + state);
+		} catch{
+			Debug.LogWarning("ARRAY HOLDER REGISTER. Can't register coordenate outside of bounds. ArrayHolderRegister.cs does not manage item Drop conditions. Refer to the script that does to know why it allowed this to happen, like AditionalConditionsForPickupMechnics.cs or the like");
+		}
 	}
 	
     public bool showDebugs=true; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
+	void ArrayDebuger(Vector2[] vectorArray, string text="ArrayDebuger") { if (showDebugs) for (int i=0; i<vectorArray.Length; i++) Debug.Log(text + " ["+i+"] " + vectorArray[i]); }
 
 }

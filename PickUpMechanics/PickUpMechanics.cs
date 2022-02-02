@@ -18,7 +18,7 @@ public class PickUpMechanics : MonoBehaviour
     public Transform pickupHolder;
 
     public static bool hasObjectOnHand = false;
-    public static Transform handObject;
+    public static Pickupable handObject;
 
     //Depreciating
 	//    public static Transform targetTransform;
@@ -87,15 +87,12 @@ public class PickUpMechanics : MonoBehaviour
         targetContainer.ResetOccupancy();
         targetPickupable.ResetOccupancy();
 
-        //Disable collider to avoid clicking it on your hand
-        //targetComponent.transform.GetComponent<Collider>().enabled = false;
-
         //Move object to hand and parent it
-        handObject = targetTransform;
+        hasObjectOnHand = true;
+        handObject = targetPickupable;
+		
         targetTransform.position = pickupHolder.position;
         targetTransform.parent = pickupHolder;
-
-        hasObjectOnHand = true;
 
         //Publish event if there's anyone subscribed to it
         if(OnPickUp != null) OnPickUp();
@@ -136,16 +133,9 @@ public class PickUpMechanics : MonoBehaviour
 
 
         //Set container and container's object
-        targetContainer.SetOccupancy( handObject.GetComponent<Pickupable>() );
-        handObject.GetComponent<Pickupable>().SetOccupancy(targetContainer);
-
-        //Enable object's collider to be able to click it again
-        //handObject.GetComponent<Collider>().enabled = true;
-
-        //Move object to container and parent it
-        handObject.position = targetTransform.position;
-        handObject.parent = targetTransform;
-        //handObject = null;
+        targetContainer.SetOccupancy( handObject );
+        handObject.SetOccupancy(targetContainer);
+		handObject.AcomodateInMyContainer();
 
         hasObjectOnHand = false;
 

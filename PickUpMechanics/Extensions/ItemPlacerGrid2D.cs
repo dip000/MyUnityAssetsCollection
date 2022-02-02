@@ -58,7 +58,7 @@ public class ItemPlacerGrid2D : MonoBehaviour
 
 			//average local position and globalize to array of containers
 			//then globalize to world coordenates adding holderContainers.position
-			Vector3 position = sum * 0.5f + itemPositions[i];
+			Vector3 position = sum+itemPositions[i];
 			position.z = position.y;
 			position.y = 0;
 			position += gridBuilder.instances[0, 0].transform.position;
@@ -97,7 +97,7 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			coordenates[i] = localCoordenates[i] + positionIndex;
 			sum += localCoordenates[i];
 		}
-			
+		sum /= localCoordenates.Length;
 		return coordenates;
 	}
 
