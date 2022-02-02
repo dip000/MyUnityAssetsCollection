@@ -19,7 +19,12 @@ public class PickUpMechanics : MonoBehaviour
 
     public static bool hasObjectOnHand = false;
     public static Transform handObject;
-	public static Transform targetTransform;
+
+    //Depreciating
+	//    public static Transform targetTransform;
+
+	public static Pickupable targetPickupable;
+	public static Container targetContainer;
 
     public static event System.Action OnPickUp;
     public static event System.Action OnDrop;
@@ -29,6 +34,10 @@ public class PickUpMechanics : MonoBehaviour
     static object pickupConditionInstance;
     static System.Reflection.PropertyInfo dropCondition;
     static object dropConditionInstance;
+
+    public const bool occupied = true;
+    public const bool free = false;
+
 
     void Update()
     {
@@ -51,16 +60,18 @@ public class PickUpMechanics : MonoBehaviour
 
     void PickUp()
     {
-        Pickupable targetComponent = RayCaster.GetFirstHitComponent<Pickupable>();
-		targetTransform = targetComponent?.transform;
-		
-        if (targetComponent == null)
+        targetPickupable = RayCaster.GetFirstHitComponent<Pickupable>();
+
+        if (targetPickupable == null)
         {
             Debuger("There's object to pick up");
             return;
         }
 
-        if (targetComponent.myContainer.isBlocked)
+		Transform targetTransform = targetPickupable.transform;
+        targetContainer = targetPickupable.myContainer;
+
+        if (targetContainer.isBlocked)
         {
             Debuger("Container blocked");
             return;
@@ -71,10 +82,10 @@ public class PickUpMechanics : MonoBehaviour
             Debuger("External condition to pick up was not met");
             return;
         }
-	
+
         //Reset object and Reset its container
-        targetComponent.myContainer.ResetOccupancy();
-        targetComponent.ResetOccupancy();
+        targetContainer.ResetOccupancy();
+        targetPickupable.ResetOccupancy();
 
         //Disable collider to avoid clicking it on your hand
         //targetComponent.transform.GetComponent<Collider>().enabled = false;
@@ -94,22 +105,24 @@ public class PickUpMechanics : MonoBehaviour
 
     void Drop()
     {
-        Container targetComponent = RayCaster.GetFirstHitComponent<Container>();
-		targetTransform = targetComponent?.transform;
+        targetContainer = RayCaster.GetFirstHitComponent<Container>();
 		
-        if (targetComponent == null)
+        if (targetContainer == null)
         {
             Debuger("There's no container");
             return;
         }
 
-        if (targetComponent.isBlocked)
+        Transform targetTransform = targetContainer.transform;
+        targetPickupable = targetContainer.objectInside;
+
+        if (targetContainer.isBlocked)
         {
             Debuger("Container blocked");
             return;
         }
 
-        if ( targetComponent.GetOccupancyState() )
+        if (targetContainer.GetOccupancyState() == occupied)
         {
             Debuger("Container: " + targetTransform.name + " is full");
             return;
@@ -120,11 +133,11 @@ public class PickUpMechanics : MonoBehaviour
             Debuger("External condition to drop was not met");
             return;
         }
-		
+
 
         //Set container and container's object
-        targetComponent.SetOccupancy( handObject.GetComponent<Pickupable>() );
-        handObject.GetComponent<Pickupable>().SetOccupancy( targetComponent );
+        targetContainer.SetOccupancy( handObject.GetComponent<Pickupable>() );
+        handObject.GetComponent<Pickupable>().SetOccupancy(targetContainer);
 
         //Enable object's collider to be able to click it again
         //handObject.GetComponent<Collider>().enabled = true;
@@ -143,6 +156,7 @@ public class PickUpMechanics : MonoBehaviour
     }
 
 
+    //------------  EXTERNAL ---------------------------------------------------
     public static void ListenPickupConditionFrom(object _instance, string name)
     {
         pickupConditionInstance = _instance;
