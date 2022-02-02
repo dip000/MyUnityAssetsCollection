@@ -5,185 +5,50 @@ using System.Linq;
 
 public class ArrayHolderRegister : MonoBehaviour {
 
-	public static Container[] containers;
+	public static Container[,] containers;
 	public static bool[,] occupancyMap;
-	
-	const bool occupied = true;
-	const bool free = false;
-	const int coordenateDimentions = 2;
 	
 	int xLength;
 	int yLength;
-	
+
 	void Awake(){
 		PickUpMechanics.OnPickUp += OnPickUp;
 		PickUpMechanics.OnDrop += OnDrop;
-		
 	}
-	
-	void Start(){
-		StartCoroutine(Co_SetupContainers());
+
+	public void RegisterContainers(Container[,] _containers)
+    {
+		if (_containers.Length <= 0)
+		{
+			Debug.LogWarning("ARRAY HOLDER REGISTER. No containers in scene to manage");
+		}
+
+		containers = _containers;
+		occupancyMap = new bool[containers.GetLength(0), containers.GetLength(1)];
 	}
-	
-	IEnumerator Co_SetupContainers(){
-		
-		//1. Get all Containers in scene
-		containers = FindObjectsOfType<Container>();
-		if(containers.Length <= 0){
-			Debug.LogWarning("ARRAY HOLDER REGISTER. No containers in scene");
-			yield break;
-		}
-		Debuger("Found " + containers.Length + " containers in scene");
 
+	public void SetupContainers(){
 
-		// 2. Pass Container's control to external components 
-		for(int i=0; i<containers.Length; i++){
-			containers[i].YieldControlToExternal();
-		}
+		occupancyMap = new bool[containers.GetLength(0), containers.GetLength(1)];
 
-
-		// 2. Containers will take some time to initialize by themselves
-		Debuger("Waiting for containers to initialize.. ");
-		while( GetContainersStatus() == false){
-			yield return null;
-		}
-		Debuger("All Containers initialized");
-		
-		
-		// 3. Stuff happens
-		FindObjecCoordenates();
-		BuildOccupancyArray();
-		//UpdateCoordenatesInOccupancyMap();
-		
 		Debuger("Containers Setted up");
 	}
-		
-	bool GetContainersStatus(){
-		bool containersFinishedInitializing = true;
-		
-		//TODO: Maybe use a push-pull register to keep track of all status
-		for(int i=0; i<containers.Length; i++){
-			containersFinishedInitializing = (containersFinishedInitializing) && (containers[i].finishedInitializing);
-		}
-		
-		return containersFinishedInitializing;
-	}
-	
-	void FindObjecCoordenates(){
-
-		Dictionary< Pickupable, List<Vector2> > objects = new Dictionary< Pickupable, List<Vector2> >();
-		
-		
-		//Saves objects like:
-		//	{ object1:[(0,0)], object2:[(0,1),(1,1)], .. }
-		//  Every vector is a point that defines object's shape
-		for(int i=0; i<containers.Length; i++){
-			
-			Container currentContainer = containers[i];
-			Pickupable currentItem = currentContainer.objectInside;
-						
-			if(currentItem != null){
-				if( objects.ContainsKey(currentItem) == false ){
-					objects[currentItem] = new List<Vector2>();
-				}
-				
-				objects[currentItem].Add(currentContainer.coordenates);
-				
-				Debuger("Coordenate finder. Saved item " + currentItem.myName + " at Container " + currentContainer.coordenates);
-			}
-		}
-		
-		//Saves coordenates in the objects themselves
-		//obj.Key is an actual reference to an object's transform
-		//TODO: position the object in the average of all its containers
-		foreach(var obj in objects)
-		{
-		  obj.Key.SetCoordenates(obj.Value.ToArray());
-		  //obj.Key.transform.position = obj.Value.Aggregate(Vector2.zero, (acc, v) => acc + v) / obj.Value.Count;
-		}
-		
-	}
-	
-	void BuildOccupancyArray(){
-		int highestIndex=0;
-		
-		for(int i=0; i<containers.Length; i++){
-			int currentIndex = (int)containers[i].coordenates.x;
-			if(currentIndex > highestIndex){
-				highestIndex = currentIndex;
-			}
-		}
-		
-		xLength = highestIndex+1;
-		yLength = containers.Length - xLength;
-		occupancyMap = new bool[xLength,yLength];
-		
-		Debuger("Occupancy array of dimentions: " + xLength + ", " + yLength );
-	}
-	
-	Vector2 average;
-	bool[,] CoordenatesToObjectShape(Vector2[] coordenates){
-		Vector2 refCoordenate = coordenates[0];
-		Vector2 smallestPosition = new Vector2(1024,1024);
-		Vector2 bigestPosition = new Vector2(-1024,-1024);
-		
-		for(int i=0; i<coordenates.Length; i++){
-			//rebuild coordenates locally
-			coordenates[i] -= refCoordenate;
-			
-			//Find smallest position
-			if(coordenates[i].x < smallestPosition.x){
-				smallestPosition.x = coordenates[i].x;
-			}
-			if(coordenates[i].y < smallestPosition.y){
-				smallestPosition.y = coordenates[i].y;
-			}
-			
-			//Find bigest position
-			if(coordenates[i].x > bigestPosition.x){
-				bigestPosition.x = coordenates[i].x;
-			}
-			if(coordenates[i].y > bigestPosition.y){
-				bigestPosition.y = coordenates[i].y;
-			}
-		}
-		
-		int xSize = (int)bigestPosition.x - (int)smallestPosition.x +1;
-		int ySize = (int)bigestPosition.y - (int)smallestPosition.y +1;
-		Debuger("smallestPosition: " + smallestPosition + "; bigestPosition:" + bigestPosition);
-		Debuger("xSize: " + xSize + "; ySize:" + ySize);
-		
-		//Move coordenates to local origin and build occupancy map
-		bool[,] shape = new bool[xSize, ySize];
-		average = Vector2.zero;
-		for(int i=0; i<coordenates.Length; i++){
-			coordenates[i] += (-smallestPosition);
-			Debuger("map["+i+"]: " + coordenates[i]);
-			shape[(int)coordenates[i].x, (int)coordenates[i].y] = true;
-			
-			average += coordenates[i];
-		}
-		
-		//discrete center of volume
-		average /= coordenates.Length;
-		Debuger("average: " + average);
-		average.x = (average.x-(int)average.x<0.5f)?(int)average.x:(int)average.x+1;
-		average.y = (average.y-(int)average.y<0.5f)?(int)average.y:(int)average.y+1;
-		Debuger("discrete average: " + average);
-		return shape;
-	}
-
 	
 	void OnPickUp(){
-		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
-		Vector2[] coordenatesToUpdate = item.coordenates;
-		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, free);
-		CoordenatesToObjectShape(coordenatesToUpdate);
+		Pickupable item = PickUpMechanics.targetPickupable;
+		Container container = PickUpMechanics.targetContainer;
+
+		Vector2[] globalCoordenates = item.coordenates;
+		Vector2 indexCoordenates = container.coordenates;
+		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.free);
+
+		Vector2[] localCoordenates;
+		localCoordenates = LocalizeCoordenates(globalCoordenates, indexCoordenates);
 	}
 	
 	void OnDrop(){
 		Pickupable item = PickUpMechanics.handObject.GetComponent<Pickupable>();
-		Container container = PickUpMechanics.targetTransform.GetComponent<Container>();
+		Container container = PickUpMechanics.targetContainer;
 		
 		//Test
 		Vector2[] coordenatesToUpdate = new Vector2[1];
@@ -191,20 +56,56 @@ public class ArrayHolderRegister : MonoBehaviour {
 		//CoordenatesToObjectShape(coordenatesToUpdate);
 		
 		item.SetCoordenates( coordenatesToUpdate );
-		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, occupied);
+		UpdateCoordenatesInOccupancyMap(coordenatesToUpdate, PickUpMechanics.occupied);
 		
 		//Update object's coordenates
 
 	}
-	
+
+	Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 indexCoordenate)
+    {
+		Vector2[] localizedCoordenates = new Vector2[globalCoordenates.Length];
+
+		for (int i=0; i< globalCoordenates.Length; i++)
+        {
+			localizedCoordenates[i] -= indexCoordenate;
+		}
+
+		return localizedCoordenates;
+
+	}
+
+	/*public void PlaceObjectInGrid(int i)
+	{
+		//Only by 90 degrees and max 3 times
+		int rotationTimes = (int)(itemRotations[i] / 90) % 4;
+		int rotationAngleClamp = rotationTimes * 90;
+
+		//Rotate and Globalize coordenates
+		Vector2 sum = Vector2.zero;
+		Vector2[] localCoordenates = RotateMatrixTimes(item.localCoordenates, rotationTimes);
+		Vector2[] globalCoordenates = GlobalizeCoordenatesAndFindAverage(localCoordenates, itemPositions[i], ref sum);
+
+		//average local position and globalize to array of containers
+		//then globalize to world coordenates adding holderContainers.position
+		Vector3 position = sum * 0.5f + itemPositions[i];
+		position.z = position.y;
+		position.y = 0;
+		position += gridBuilder.instances[0, 0].transform.position;
+
+		int xIndex = (int)itemPositions[i].x;
+		int yIndex = (int)itemPositions[i].y;
+	}*/
+
 	void UpdateCoordenatesInOccupancyMap(Vector2[] coordenates, bool state){
 		for(int i=0; i<coordenates.Length; i++){
 			occupancyMap[(int)coordenates[i].x, (int)coordenates[i].y] = state;
+			Debuger("Updated " + coordenates[i]);
 		}
 		
 		Debuger("Updated " + coordenates.Length + " coordenates in occupancy map to the state: " + state);
 	}
 	
-    public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
+    public bool showDebugs=true; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 
 }
