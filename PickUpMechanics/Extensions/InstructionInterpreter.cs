@@ -46,6 +46,9 @@ public class InstructionInterpreter : MonoBehaviour
 
         gridBuilder2D.BuildGrid();
         itemPlacerGrid2D.PlaceItems();
+
+        ArrayHolderRegister arrayHolderRegister = gridBuilder2D.graphicsParent.GetComponent<ArrayHolderRegister>();
+        arrayHolderRegister.SetupContainers();
     }
 
 

@@ -46,9 +46,9 @@ public class ItemPlacerGrid2D : MonoBehaviour
 				Debuger("No graphics to use as item. Will use a placeholder");
 				graphics = placeholder;
 			}
-			
+
 			//Only by 90 degrees and max 3 times
-			int rotationTimes = (int) (itemRotations[i] / 90) % 4;
+			int rotationTimes = (int)(itemRotations[i] / 90) % 4;
 			int rotationAngleClamp = rotationTimes * 90;
 
 			//Rotate and Globalize coordenates
@@ -61,20 +61,19 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			Vector3 position = sum * 0.5f + itemPositions[i];
 			position.z = position.y;
 			position.y = 0;
-			position += gridBuilder.instances[0,0].position;
+			position += gridBuilder.instances[0, 0].transform.position;
 
 			int xIndex = (int)itemPositions[i].x;
 			int yIndex = (int)itemPositions[i].y;
 
 			//Apply transforms and properties
-			Transform parent = gridBuilder.instances[xIndex, yIndex];
-			GameObject instance = Instantiate(graphics, position, Quaternion.Euler(0, rotationAngleClamp, 0) );
-			instance.name = item.itemName;
-			instance.AddComponent<Pickupable>();
+			Container container = gridBuilder.instances[xIndex, yIndex];
+			GameObject itemInstance = Instantiate(graphics, position, Quaternion.Euler(0, rotationAngleClamp, 0) );
+			itemInstance.name = item.itemName;
+			itemInstance.AddComponent<Pickupable>();
 
 			//Setup components and internal logic
-			Pickupable instanceComponent = instance.GetComponent<Pickupable>();
-			Container container = parent.GetComponent<Container>();
+			Pickupable instanceComponent = itemInstance.GetComponent<Pickupable>();
 
 			instanceComponent.myName = item.itemName;
 			instanceComponent.SetCoordenates( globalCoordenates );
@@ -82,14 +81,14 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			container.SetOccupancy( instanceComponent );
 
 			//Save as a reference
-			instances[i] = instance.transform;
+			instances[i] = itemInstance.transform;
 			Debuger("Placed " + item.itemName + " in position " + position + " and rotation " + itemRotations[i]);
 		}
-		
-		
+
 		DestroyImmediate(placeholder);
 	}
-	
+
+
 	
 	Vector2[] GlobalizeCoordenatesAndFindAverage(Vector2[] localCoordenates, Vector2 positionIndex, ref Vector2 sum){
 		Vector2[] coordenates = new Vector2[ localCoordenates.Length ];

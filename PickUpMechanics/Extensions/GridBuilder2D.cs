@@ -12,11 +12,11 @@ public class GridBuilder2D : MonoBehaviour
 	public GameObject containerGraphics;
 	public GameObject holderOfContainers;
 
-	public Transform[,] instances {get; private set;}
+	public Container[,] instances {get; private set;}
 	
 	
 	
-	GameObject graphicsParent;
+	public GameObject graphicsParent;
 	
     private void Awake()
     {
@@ -36,7 +36,7 @@ public class GridBuilder2D : MonoBehaviour
 		var placeHolder = GameObject.CreatePrimitive(PrimitiveType.Cube);
 		var graphics = containerGraphics;
 		graphicsParent = holderOfContainers;
-		instances = new Transform[ (int)containers.x,(int)containers.y ];
+		instances = new Container[ (int)containers.x,(int)containers.y ];
 		
 		if(containerGraphics == null){
 			Debuger("No graphics to use as containers. Will use placeholders");
@@ -52,8 +52,9 @@ public class GridBuilder2D : MonoBehaviour
 		
 		float detectionRadius = (containersSize.x < containersSize.y) ? containersSize.x : containersSize.y;
 		detectionRadius *= 0.5f;
-		
-		for(int i=0; i<containers.x; i++){			
+		graphicsParent.AddComponent<ArrayHolderRegister>();
+
+		for (int i=0; i<containers.x; i++){			
 			for(int j=0; j<containers.y; j++){
 				GameObject instance = Instantiate(graphics, graphicsParent.transform);
 				instance.transform.localScale = new Vector3( containersSize.x, 1, containersSize.y );
@@ -68,11 +69,12 @@ public class GridBuilder2D : MonoBehaviour
 				Container instanceComponent = instance.GetComponent<Container>();
 				instanceComponent.coordenates = new Vector2(i, j);
 				
-				instances[i, j] = instance.transform;
+				instances[i, j] = instanceComponent;
 			}
 		}
-		
-		
+
+		graphicsParent.GetComponent<ArrayHolderRegister>().RegisterContainers(instances);
+
 		DestroyImmediate(placeHolder);
 		Debuger("Grid Built");		
 	}
@@ -90,7 +92,7 @@ public class GridBuilder2D : MonoBehaviour
 		}
 
 		DestroyImmediate(graphicsParent);
-		instances = new Transform[0,0];
+		instances = new Container[0,0];
 	}
 	
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }

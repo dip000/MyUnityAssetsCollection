@@ -8,15 +8,12 @@ public class Container : MonoBehaviour
 	public Vector2 coordenates;
 
     bool isOccupied = false;
-    public Pickupable objectInside { get; private set; }
-    [HideInInspector] public bool isBlocked;
+	public Pickupable objectInside { get; private set; }
+	[HideInInspector] public bool isBlocked = false;
 	
 	//Interesting bug if i declare this withouth private set..
 	public bool finishedInitializing {get; private set;} = false;
 	public bool yieldControlToExternal {get; private set;} = false;
-	
-	const bool occupied = true;
-	const bool free = false;
 
 
     public void ResetOccupancy()
@@ -41,7 +38,7 @@ public class Container : MonoBehaviour
 	
 	public bool GetOccupancyState(){
 		if(yieldControlToExternal){
-			return free;
+			return PickUpMechanics.free;
 		}
 
 		return isOccupied;
@@ -50,8 +47,6 @@ public class Container : MonoBehaviour
 	public void YieldControlToExternal(){
 		yieldControlToExternal = true;
 	}
-	
 
-    [Header("Check to visualize detection radius")]
     public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 }
