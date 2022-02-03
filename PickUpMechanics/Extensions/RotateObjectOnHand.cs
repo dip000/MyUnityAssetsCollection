@@ -5,15 +5,20 @@ using UnityEngine;
 public class RotateObjectOnHand : MonoBehaviour
 {
 	ArrayHolderRegister arrayHolderRegister;
-
-    private void Start()
-    {
-		arrayHolderRegister = GetComponent<ArrayHolderRegister>();
+	bool enableRotations = false;
+	
+	public void StartObjectRotations(ArrayHolderRegister _arrayHolderRegister){
+		arrayHolderRegister = _arrayHolderRegister;
+		enableRotations = true;
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
+		if(enableRotations == false){
+			return;
+		}
+		
 		if(PickUpMechanics.hasObjectOnHand == false)
         {
 			return;
