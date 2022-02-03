@@ -6,7 +6,7 @@ using UnityEngine;
 public class GridBuilder2D : MonoBehaviour
 {
 	public Vector2 containers = new Vector2(3,2);
-	public Vector2 containersSize = new Vector2(0.8f,0.8f);
+	public Vector3 containersSize = new Vector3(0.8f,0.8f, 0.8f);
 	public float margin = 0.2f;
 	
 	public GameObject containerGraphics;
@@ -20,7 +20,7 @@ public class GridBuilder2D : MonoBehaviour
     {
 	}
 
-	public void Setup(Vector2 _containers, Vector2 _containersSize, float _margin)
+	public void Setup(Vector2 _containers, Vector3 _containersSize, float _margin)
     {
 		containers = _containers;
 		containersSize = _containersSize;
@@ -36,6 +36,7 @@ public class GridBuilder2D : MonoBehaviour
 		graphicsParent = holderOfContainers;
 		instances = new Container[ (int)containers.x,(int)containers.y ];
 		
+		
 		if(containerGraphics == null){
 			Debuger("No graphics to use as containers. Will use placeholders");
 			graphics = placeHolder;
@@ -47,21 +48,16 @@ public class GridBuilder2D : MonoBehaviour
 			Debuger("No holderContainer. Will make one at World Origin");
 			graphicsParent = new GameObject("Holder Of Containers");
 		}
-		
-		float detectionRadius = (containersSize.x < containersSize.y) ? containersSize.x : containersSize.y;
-		detectionRadius *= 0.5f;
-		//graphicsParent.AddComponent<ArrayHolderRegister>();
-		//graphicsParent.AddComponent<AditionalConditionsForPickUpMechanics>();
 
 		for (int i=0; i<containers.x; i++){			
 			for(int j=0; j<containers.y; j++){
 				GameObject instance = Instantiate(graphics, graphicsParent.transform);
-				instance.transform.localScale = new Vector3( containersSize.x, 1, containersSize.y );
+				instance.transform.localScale = new Vector3( containersSize.x, containersSize.y, containersSize.z );
 				instance.name = "Container " + i + "-" + j;
 				
 				Vector3 objectPosition = Vector3.zero;
 				objectPosition.x = i * (containersSize.x + margin);
-				objectPosition.z = j * (containersSize.y + margin);
+				objectPosition.z = j * (containersSize.z + margin);
 				
 				instance.transform.position = objectPosition;
 				
@@ -71,8 +67,6 @@ public class GridBuilder2D : MonoBehaviour
 				instances[i, j] = instanceComponent;
 			}
 		}
-
-		graphicsParent.GetComponent<ArrayHolderRegister>().RegisterContainers(instances);
 
 		DestroyImmediate(placeHolder);
 		Debuger("Grid Built");		

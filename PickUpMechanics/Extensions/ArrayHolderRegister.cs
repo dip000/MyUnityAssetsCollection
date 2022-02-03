@@ -8,10 +8,11 @@ public class ArrayHolderRegister : MonoBehaviour {
 	public static Container[,] containers;
 	public static bool[,] occupancyMap;
 	public Vector2[] localCoordenates;
-
+	
 	void Awake(){
 		PickUpMechanics.OnPickUp += OnPickUp;
 		PickUpMechanics.OnDrop += OnDrop;
+		
 	}
 
 
