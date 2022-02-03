@@ -4,44 +4,82 @@ using UnityEngine;
 
 public class RotateObjectOnHand : MonoBehaviour
 {
-    public float scrollComparator = 1.0f;
-	public float scrollDeltaAcumulated;
+	ArrayHolderRegister arrayHolderRegister;
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        if(PickUpMechanics.hasObjectOnHand){
-			if(Input.mouseScrollDelta.y != 0){
-				Debuger("Mouse scroll started with value:" + scrollDeltaAcumulated);
-				scrollDeltaAcumulated = Input.mouseScrollDelta.y;
-				StartCoroutine( ScrollMouseMotion() );
-			}
-		}
-		else{
-			scrollDeltaAcumulated = 0;
-		}
-    }
-	
-	int rotation;
-	
-	IEnumerator ScrollMouseMotion(){
-		if(Input.mouseScrollDelta.y == 0){
-			Debuger("Mouse scroll stopped with value:" + scrollDeltaAcumulated);
-			yield break;
-		}
-		
-		yield return new WaitForSeconds(0.05f);
-		
-		scrollDeltaAcumulated += Input.mouseScrollDelta.y;
-		
-		if(Mathf.Abs(scrollDeltaAcumulated) >= scrollComparator){
-			scrollDeltaAcumulated -= scrollComparator;
-			
-			int rotationAngleClamp = (++rotation * 90)%360;
-			PickUpMechanics.handObject.transform.rotation = Quaternion.Euler(0, rotationAngleClamp, 0);
-			
-			Debuger("Scroll accumulated to the next change");
-		}
+		arrayHolderRegister = GetComponent<ArrayHolderRegister>();
 	}
-    public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
+
+	// Update is called once per frame
+	void Update()
+	{
+		if(PickUpMechanics.hasObjectOnHand == false)
+        {
+			return;
+        }
+
+		float delta = Input.GetAxis("Mouse ScrollWheel") * 10.0f;
+
+		int timesToRotate = 1;
+		int directionSign = -1;
+
+		if(delta > 0.0f)
+		{
+			timesToRotate = 3;
+			directionSign = 1;
+		}
+
+		if (delta != 0)
+		{
+			PickUpMechanics.handObject.transform.Rotate(Vector3.up, directionSign*90);
+			RotateItem(timesToRotate);
+		}
+
+	}
+
+
+
+	void RotateItem(int rotation)
+    {
+		//Rotate and Globalize coordenates
+		arrayHolderRegister.localCoordenates = RotateMatrixTimes(arrayHolderRegister.localCoordenates, rotation);
+	}
+
+	Vector2[] RotateMatrixTimes(Vector2[] vector, int times)
+	{
+
+		Vector2[] vectorOut = new Vector2[vector.Length];
+		vector.CopyTo(vectorOut, 0);
+
+		for (int rotateTimes = 0; rotateTimes < times; rotateTimes++)
+		{
+			float xMax = 0;
+
+			//Mirror on 45 degrees
+			for (int i = 0; i < vectorOut.Length; i++)
+			{
+				float xTemp = vectorOut[i].x;
+				vectorOut[i].x = vectorOut[i].y;
+				vectorOut[i].y = xTemp;
+
+				//A reference to mirror the Y axis
+				if (vectorOut[i].x > xMax)
+				{
+					xMax = vectorOut[i].x;
+				}
+			}
+
+			//Mirror on Y axis
+			for (int i = 0; i < vectorOut.Length; i++)
+			{
+				vectorOut[i].x = xMax - vectorOut[i].x;
+			}
+
+		}
+
+		Debuger("Rotated vector " + times + " times");
+		return vectorOut;
+	}
+	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 }
