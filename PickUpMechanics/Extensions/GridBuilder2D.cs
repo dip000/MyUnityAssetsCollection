@@ -50,8 +50,8 @@ public class GridBuilder2D : MonoBehaviour
 		
 		float detectionRadius = (containersSize.x < containersSize.y) ? containersSize.x : containersSize.y;
 		detectionRadius *= 0.5f;
-		graphicsParent.AddComponent<ArrayHolderRegister>();
-		graphicsParent.AddComponent<AditionalConditionsForPickUpMechanics>();
+		//graphicsParent.AddComponent<ArrayHolderRegister>();
+		//graphicsParent.AddComponent<AditionalConditionsForPickUpMechanics>();
 
 		for (int i=0; i<containers.x; i++){			
 			for(int j=0; j<containers.y; j++){

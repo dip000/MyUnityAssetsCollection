@@ -52,13 +52,13 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			int rotationAngleClamp = rotationTimes * 90;
 
 			//Rotate and Globalize coordenates
-			Vector2 sum = Vector2.zero;
 			Vector2[] localCoordenates = RotateMatrixTimes(item.localCoordenates, rotationTimes);
-			Vector2[] globalCoordenates = GlobalizeCoordenatesAndFindAverage(localCoordenates, itemPositions[i], ref sum);
+			Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, itemPositions[i]);
+			Vector2 average = BoundingBoxAverageOfCoordenates(localCoordenates);
 
 			//average local position and globalize to array of containers
 			//then globalize to world coordenates adding holderContainers.position
-			Vector3 position = sum+itemPositions[i];
+			Vector3 position = average + itemPositions[i];
 			position.z = position.y;
 			position.y = 0;
 			position += gridBuilder.instances[0, 0].transform.position;
@@ -73,12 +73,12 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			itemInstance.AddComponent<Pickupable>();
 
 			//Setup components and internal logic
-			Pickupable instanceComponent = itemInstance.GetComponent<Pickupable>();
+			Pickupable itemInstanceComponent = itemInstance.GetComponent<Pickupable>();
 
-			instanceComponent.myName = item.itemName;
-			instanceComponent.SetCoordenates( globalCoordenates );
-			instanceComponent.SetOccupancy( container );
-			container.SetOccupancy( instanceComponent );
+			itemInstanceComponent.myName = item.itemName;
+			itemInstanceComponent.SetCoordenates( globalCoordenates, itemPositions[i]);
+			itemInstanceComponent.SetOccupancy( container );
+			container.SetOccupancy(itemInstanceComponent);
 
 			//Save as a reference
 			instances[i] = itemInstance.transform;
@@ -88,16 +88,35 @@ public class ItemPlacerGrid2D : MonoBehaviour
 		DestroyImmediate(placeholder);
 	}
 
+	Vector2 BoundingBoxAverageOfCoordenates(Vector2[] coordenates)
+	{
 
-	
-	Vector2[] GlobalizeCoordenatesAndFindAverage(Vector2[] localCoordenates, Vector2 positionIndex, ref Vector2 sum){
+		Vector2 averageOfLocalCoordenates = Vector2.zero;
+
+		for (int i = 0; i < coordenates.Length; i++)
+		{
+
+			if (coordenates[i].x > averageOfLocalCoordenates.x)
+			{
+				averageOfLocalCoordenates.x = coordenates[i].x;
+			}
+			if (coordenates[i].y > averageOfLocalCoordenates.y)
+			{
+				averageOfLocalCoordenates.y = coordenates[i].y;
+			}
+		}
+
+		averageOfLocalCoordenates *= 0.5f;
+
+		return averageOfLocalCoordenates;
+	}
+
+	Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 positionIndex){
 		Vector2[] coordenates = new Vector2[ localCoordenates.Length ];
 		
 		for(int i=0; i<localCoordenates.Length; i++){
 			coordenates[i] = localCoordenates[i] + positionIndex;
-			sum += localCoordenates[i];
 		}
-		sum /= localCoordenates.Length;
 		return coordenates;
 	}
 
