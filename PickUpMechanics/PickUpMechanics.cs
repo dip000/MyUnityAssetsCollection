@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /* LISTEN TO EXTERNAL CONDITION:
@@ -29,11 +31,6 @@ public class PickUpMechanics : MonoBehaviour
     public static event System.Action OnPickUp;
     public static event System.Action OnDrop;
 
-    //To listen to an external condition, leave null to ignore
-    static System.Reflection.PropertyInfo pickupCondition;
-    static object pickupConditionInstance;
-    static System.Reflection.PropertyInfo dropCondition;
-    static object dropConditionInstance;
 
     public const bool occupied = true;
     public const bool free = false;
@@ -147,45 +144,66 @@ public class PickUpMechanics : MonoBehaviour
 
 
     //------------  EXTERNAL ---------------------------------------------------
+    //To listen to an external condition, leave null to ignore
+    static List<System.Reflection.PropertyInfo> pickupCondition = new List<System.Reflection.PropertyInfo>();
+    static List<object> pickupConditionInstance = new List<object>();
+    static List<System.Reflection.PropertyInfo> dropCondition = new List<System.Reflection.PropertyInfo>();
+    static List<object> dropConditionInstance = new List<object>();
+
     public static void ListenPickupConditionFrom(object _instance, string name)
     {
-        pickupConditionInstance = _instance;
-        pickupCondition = pickupConditionInstance?.GetType().GetProperty(name);
-
-        if (pickupCondition == null)
+		
+		System.Reflection.PropertyInfo condition = _instance?.GetType().GetProperty(name);
+		
+        if (condition == null)
         {
             Debug.LogWarning("PICKUP MECHANICS. Couldn't setup the listener to external conditional. Variable: " + name + " must exist in given instance, be public, be boolean, and have a getter to fetch a value");
-            pickupConditionInstance = null;
         }
+		else{
+            print("Listener setup linked. Variable name: " + name);
+			pickupConditionInstance.Add(_instance);
+			pickupCondition.Add(condition);
+		}
     }
+	
     public static void ListenDropConditionFrom(object _instance, string name)
     {
-        dropConditionInstance = _instance;
-        dropCondition = dropConditionInstance?.GetType().GetProperty(name);
-
-        if (dropCondition == null)
+		System.Reflection.PropertyInfo condition = _instance?.GetType().GetProperty(name);
+		
+        if (condition == null)
         {
             Debug.LogWarning("PICKUP MECHANICS. Couldn't setup the listener to external conditional. Variable: " + name + " must exist in given instance, be public, be boolean, and have a getter to fetch a value");
-            dropConditionInstance = null;
         }
+		else{
+            print("Listener setup linked. Variable name: " + name);
+			dropConditionInstance.Add(_instance);
+			dropCondition.Add(condition);
+		}
     }
 
     bool GetExternalPickupCondition()
     {
         //By default, not having external condition returns true to continue
         bool result = true;
-        if (pickupCondition != null)
-            result = (bool)pickupCondition.GetValue(pickupConditionInstance, null);
-
+		for(var i=0; i<pickupCondition.Count; i++){
+			if (pickupCondition[i] != null){
+				result &= (bool)pickupCondition[i].GetValue(pickupConditionInstance[i], null);
+				Debuger("Condition n:" + result);
+			}
+		}
         return result;
     }
+	
     bool GetExternalDropCondition()
     {
         //By default, not having external condition returns true to continue
         bool result = true;
-        if (dropCondition != null)
-            result = (bool)dropCondition.GetValue(dropConditionInstance, null);
-
+		for(var i=0; i<dropCondition.Count; i++){
+			if (dropCondition[i] != null){
+				result &= (bool)dropCondition[i].GetValue(dropConditionInstance[i], null);
+				Debuger("Condition n:" + result);
+			}
+		}
         return result;
     }
     public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
