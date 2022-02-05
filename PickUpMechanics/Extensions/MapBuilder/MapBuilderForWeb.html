@@ -3,24 +3,24 @@
 <script type="text/javascript" src="MapBuilder.js"></script>
 <script type="text/javascript" src="BuilderCalculations.js"></script>
 <script type="text/javascript" src="BuilderVisuals.js"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 <link rel="stylesheet" type="text/css" href="MapBuilderStyles.css">
 
     <body>
 	
-		<div class="items">
-			<div class="item" onclick="ChangeItem(0)">Box</div>
-			<div class="item" onclick="ChangeItem(1)">Wall</div>
-			<div class="item" onclick="ChangeItem(2)">Corner</div>
-		</div>
+		<div class="items" id="itemsArea"></div>
 
 		<div class="stats">
-				Item Type(0-99):<input type='text' id='itemType' value='0' onchange='ChangeItem()'></input><br>
-				Rotation(0,90,180,270):<input type='text' id='rotation' value='0'></input><br>
-				PositionX(0-MapSizeX):<input type='text' id='positionX' value='0'></input><br>
-				PositionY(0-MapSizeY):<input type='text' id='positionY' value='0'></input><br>
+				<span>Item Type: </span><span id='itemType'>0</span><br>
+				<span>Rotation: </span><span id='rotation'>0</span><br>
+				<div ><span>Coordenate: </span><span id='positionX'>0</span> , <span id='positionY'>0</span></div>
 		</div>
-		<br>
-		<button onclick='DownloadMap()'>Download Map</button>
+		
+		<div class="control">
+			<button class="sideButton downloadButton" onclick='DownloadMap()'><i class="material-icons">download</i> Download</button>
+			<button class="sideButton" onclick='ResetMap()'><i class="material-icons">delete</i> Reset Map</button>
+		</div>
 	
     </body>
     <script>
@@ -42,6 +42,7 @@
         window.onload = function () {
 			initializeMap(20, 40);
 			initializeInputsAndOutputs();
+			initializeItems();
         }
 		
 		function initializeInputsAndOutputs(x, y){
@@ -51,17 +52,13 @@
             rotation = document.getElementById('rotation');
             positionX = document.getElementById('positionX');
             positionY = document.getElementById('positionY');
-			currentItemPlacingInfo.itemType = parseInt(itemType.value);
-			currentItemPlacingInfo.rotation = parseInt(rotation.value);
-			currentItemPlacingInfo.positionX = 0;
-			currentItemPlacingInfo.positionY = 0;
-			currentItemPlacingInfo.coordenates = new Vector2Array(0,0);
 		}
 		
 		function initializeMap(x, y){
 			var tableID = "grid";
-            generate_table(x, y, tableID);
-            table = document.getElementById(tableID);
+            
+            table = generate_table(x, y);
+			table.id = tableID;
 			cells = document.getElementsByTagName("td");
 			
             AddClickListenerToElement(table);
@@ -70,6 +67,23 @@
 			occupancyMap = Array(x).fill(null).map(()=>Array(y).fill(false));
 		}
 		
+		function initializeItems(){
+            var item;
+			let itemsArea = document.getElementById('itemsArea');
+			let defaultNames = ["Box", "Wall", "Corner Wall"];
+			
+			for(let i=0; i<3; i++){
+				item = generate_table(4, 4);
+				item.innerHTML += defaultNames[i];
+				item.className = "item";
+				itemsArea.appendChild( item );
+				item.addEventListener('click', function(){ ChangeItem(i); } );
+				
+				let coordenates = GlobalizeCoordenates( listOfShapes[i] , 1, 1);
+				printVisualsOfCoordenatesOnTable(coordenates, 'lightGreen', item);
+				
+			}
+		}
 		
 ///////////////////// MAIN ////////////////////////////////////////////////////
 		
@@ -117,12 +131,8 @@
 		}
 
 		function ChangeItem(itemIndex){
-			if(itemIndex != null)
-				currentItemPlacingInfo.itemType = itemIndex;
-			else
-				currentItemPlacingInfo.itemType = parseInt(itemType.value);
-		
-			itemType.value = currentItemPlacingInfo.itemType;
+			currentItemPlacingInfo.itemType = itemIndex;
+			itemType.innerHTML = currentItemPlacingInfo.itemType;
 		
 			console.log("Item changed to type: " + itemType.value);
 		}
