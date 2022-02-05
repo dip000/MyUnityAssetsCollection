@@ -4,22 +4,20 @@
 
 	var previusCoordenates;
 	
+	
 	function AddHoverListenerToElements(elements){
 		for(let i=0; i<elements.length; i++){
-			elements[i].addEventListener('mouseenter', function(e) {
-								
+			elements[i].addEventListener('mouseenter', function(e){
 				currentItemPlacingInfo.positionX = e.target.parentElement.rowIndex;
 				currentItemPlacingInfo.positionY = e.target.cellIndex;
 				
-				positionX.value = currentItemPlacingInfo.positionX;
-				positionY.value = currentItemPlacingInfo.positionY;
-		
+				positionX.innerHTML = currentItemPlacingInfo.positionX;
+				positionY.innerHTML = currentItemPlacingInfo.positionY;
+
 				printHoverVisuals();
-				
 			}, false);
 		}
 	}
-	
 
 	function AddClickListenerToElement(element){
 		element.addEventListener('click', function(e) {
@@ -46,7 +44,7 @@
 			console.log(currentItemPlacingInfo);
 			currentItemPlacingInfo.rotation = (rot+currentItemPlacingInfo.rotation)%360;
 			
-			rotation.value = currentItemPlacingInfo.rotation;
+			rotation.innerHTML = currentItemPlacingInfo.rotation;
 			
 			printHoverVisuals();
 		});
@@ -80,6 +78,13 @@
 			cell.style.backgroundColor = color;	
 		}
 	}
+	function printVisualsOfCoordenatesOnTable(shape, color, table){
+		if(shape==null) return;
+		for(var i=0; i<shape.x.length; i++){
+			var cell = table.rows[ shape.x[i] ].cells[ shape.y[i] ];
+			cell.style.backgroundColor = color;	
+		}
+	}
 	
 	
 	
@@ -103,7 +108,7 @@
 
 // TYPES AND CONSTRUCTORS //////////////////////////////////////////////////////////
 
-	function generate_table(x, y, tableID) {
+	function generate_table(x, y) {
 		// get the reference for the body
 		var body = document.getElementsByTagName("body")[0];
 
@@ -134,8 +139,8 @@
 		tbl.appendChild(tblBody);
 		body.appendChild(tbl);
 		tbl.setAttribute("border", "2");
-
-		tbl.id = tableID;
+		
+		return tbl;
 	}
 	
 ////////////////////////////////////////////////////////////////////////////////////

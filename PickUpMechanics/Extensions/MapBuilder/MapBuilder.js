@@ -235,6 +235,17 @@ function ItemPlacingInfo(itemType, rotation, positionX, positionY, coordenates){
 		this.indexInHistory = instance.indexInHistory;
 		this.deleted = instance.deleted;
 	}
+	else if(itemType == null){
+		this.itemType  = 0;
+		this.rotation  = 0;
+		this.positionX = 0;
+		this.positionY = 0;
+		this.coordenates = new Vector2Array();
+		
+		//Internal properties
+		this.indexInHistory = 0;
+		this.deleted = false;
+	}
 	else{
 		this.itemType  = itemType;
 		this.rotation  = rotation;
