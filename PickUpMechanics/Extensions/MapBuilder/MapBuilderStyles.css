@@ -1,0 +1,44 @@
+	tr, td {
+		padding: 0.6rem;
+		border: 0.1px solid gray;
+	}
+	table {
+	  border-collapse: collapse;
+	}
+	table:hover {
+		cursor: pointer;
+	}
+
+	body {
+		padding: 1%;
+		background-color: ghostWhite;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		font-size: 1rem;
+	}
+
+
+	.items .item{
+		display: inline-block;
+		width: 10%;
+		padding: 5px;
+		background-color:lightBlue;
+		cursor: pointer;
+	}
+	
+	.item:hover {
+		background-color:steelBlue;
+	}
+	
+	
+	.stats {
+		position: fixed;
+		left: 0;
+		bottom: 0;
+		width: 20%;
+		background-color: #FFFFFF55;
+		color: gray;
+	}
+
+ /*style="transform: rotate(90deg)"*/
+
+

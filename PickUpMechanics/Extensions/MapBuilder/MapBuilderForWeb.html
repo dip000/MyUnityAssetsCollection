@@ -1,0 +1,143 @@
+
+<html>
+<script type="text/javascript" src="MapBuilder.js"></script>
+<script type="text/javascript" src="BuilderCalculations.js"></script>
+<script type="text/javascript" src="BuilderVisuals.js"></script>
+<link rel="stylesheet" type="text/css" href="MapBuilderStyles.css">
+
+    <body>
+	
+		<div class="items">
+			<div class="item" onclick="ChangeItem(0)">Box</div>
+			<div class="item" onclick="ChangeItem(1)">Wall</div>
+			<div class="item" onclick="ChangeItem(2)">Corner</div>
+		</div>
+
+		<div class="stats">
+				Item Type(0-99):<input type='text' id='itemType' value='0' onchange='ChangeItem()'></input><br>
+				Rotation(0,90,180,270):<input type='text' id='rotation' value='0'></input><br>
+				PositionX(0-MapSizeX):<input type='text' id='positionX' value='0'></input><br>
+				PositionY(0-MapSizeY):<input type='text' id='positionY' value='0'></input><br>
+		</div>
+		<br>
+		<button onclick='DownloadMap()'>Download Map</button>
+	
+    </body>
+    <script>
+        var table;
+        var itemType;
+        var rotation;
+        var positionX;
+        var positionY;
+		
+		//Test List Of Shapes
+		var listOfShapes = [
+			new Vector2Array([0],[0]),
+			new Vector2Array([0,0],[0,1]),
+			new Vector2Array([0,0,1],[0,1,1])
+		];
+		
+		var currentItemPlacingInfo = new ItemPlacingInfo();
+
+        window.onload = function () {
+			initializeMap(20, 40);
+			initializeInputsAndOutputs();
+        }
+		
+		function initializeInputsAndOutputs(x, y){
+			AddListenerToScrollWheel(table);
+	
+            itemType = document.getElementById('itemType');
+            rotation = document.getElementById('rotation');
+            positionX = document.getElementById('positionX');
+            positionY = document.getElementById('positionY');
+			currentItemPlacingInfo.itemType = parseInt(itemType.value);
+			currentItemPlacingInfo.rotation = parseInt(rotation.value);
+			currentItemPlacingInfo.positionX = 0;
+			currentItemPlacingInfo.positionY = 0;
+			currentItemPlacingInfo.coordenates = new Vector2Array(0,0);
+		}
+		
+		function initializeMap(x, y){
+			var tableID = "grid";
+            generate_table(x, y, tableID);
+            table = document.getElementById(tableID);
+			cells = document.getElementsByTagName("td");
+			
+            AddClickListenerToElement(table);
+			AddHoverListenerToElements(cells);
+			
+			occupancyMap = Array(x).fill(null).map(()=>Array(y).fill(false));
+		}
+		
+		
+///////////////////// MAIN ////////////////////////////////////////////////////
+		
+        function OnGridClick(x, y){
+			//Resets Ctrl+Z actions
+			chainedUndoneIndex = 0;
+			
+			//Creates an object {[x],[y]} where x and y are integrers
+			var clickedCoordenate = new Vector2Array(x, y);
+			
+			if ( GetOccupancyOfCoordenates(clickedCoordenate) == OCCUPIED ){
+				let itemPlacingInfo = FindHistoryInfoAtCoordenates(clickedCoordenate);
+				console.log("Clicked on an item. Placing info:");
+				console.log(itemPlacingInfo);
+				DeleteFromHistoryOfPlacements(itemPlacingInfo);
+				printVisualsOfCoordenates(itemPlacingInfo.coordenates, "white");
+				UpdateOccupancy(itemPlacingInfo.coordenates, FREE);
+			}
+			else{
+				console.log("Clicked on empty space");
+				PlaceItemAtCurrentItemInfo();
+			}
+        }
+		
+		
+		function PlaceItemAtCurrentItemInfo(){
+			//make info
+			let shape = listOfShapes[currentItemPlacingInfo.itemType];
+			let shapeRotated = RotateCoordenatesByAngle(shape, currentItemPlacingInfo.rotation);
+			let coordenates = GlobalizeCoordenates(shapeRotated, currentItemPlacingInfo.positionX, currentItemPlacingInfo.positionY);
+			currentItemPlacingInfo.coordenates = coordenates;
+			
+			if(GetOccupancyOfCoordenates(coordenates) == FREE){
+				console.log("CorrectPlacement");
+				printVisualsOfCoordenates(coordenates, "green");
+				UpdateOccupancy(coordenates, OCCUPIED);
+				RegisterHistoryOfPlacements(currentItemPlacingInfo);
+			}
+			else{
+				console.log("Incorrect Placement");
+			}
+			
+			console.log("END OF PLACEMENT");
+			console.log(coordenates);
+		}
+
+		function ChangeItem(itemIndex){
+			if(itemIndex != null)
+				currentItemPlacingInfo.itemType = itemIndex;
+			else
+				currentItemPlacingInfo.itemType = parseInt(itemType.value);
+		
+			itemType.value = currentItemPlacingInfo.itemType;
+		
+			console.log("Item changed to type: " + itemType.value);
+		}
+	    
+		
+		function DownloadMap(){
+		
+			let outputData = formatCoordenates();
+			
+			console.log("DOWNLOADED:");
+			console.log(outputData);
+            download("test"+ ".json", JSON.stringify(outputData));
+        }	
+/////////////////////////////////////////////////////////////////////////
+
+
+    </script>
+</html>
