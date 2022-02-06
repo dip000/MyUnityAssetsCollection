@@ -11,6 +11,8 @@
 				currentItemPlacingInfo.positionX = e.target.parentElement.rowIndex;
 				currentItemPlacingInfo.positionY = e.target.cellIndex;
 				
+				//console.log("Hovering: " + typeof(currentItemPlacingInfo.positionX) +","+ currentItemPlacingInfo.positionY);
+				
 				positionX.innerHTML = currentItemPlacingInfo.positionX;
 				positionY.innerHTML = currentItemPlacingInfo.positionY;
 
@@ -60,12 +62,12 @@
 		let shape = listOfShapes[currentItemPlacingInfo.itemType];
 		let shapeRotated = RotateCoordenatesByAngle(shape, currentItemPlacingInfo.rotation);
 		let coordenates = GlobalizeCoordenates(shapeRotated, currentItemPlacingInfo.positionX, currentItemPlacingInfo.positionY);
-		
+				
 		coordenates = IgnoreOccupiedCoordenates(coordenates);
 		previusCoordenates = IgnoreOccupiedCoordenates(previusCoordenates);
 		
-		printVisualsOfCoordenates( previusCoordenates , "white" );
-		printVisualsOfCoordenates( coordenates, "lightBlue" );
+		printVisualsOfCoordenates( previusCoordenates , clearedGridColor );
+		printVisualsOfCoordenates( coordenates, itemShadowColor );
 		
 		previusCoordenates = coordenates;
 	}
@@ -75,6 +77,9 @@
 		if(shape==null) return;
 		for(var i=0; i<shape.x.length; i++){
 			var cell = table.rows[ shape.x[i] ].cells[ shape.y[i] ];
+			
+			if(cell == null) continue;
+			
 			cell.style.backgroundColor = color;	
 		}
 	}
@@ -94,13 +99,19 @@
 		var cellColor = cell.style.backgroundColor
 
 		if(cellColor == "red"){
-			cell.style.backgroundColor = "white";
+			cell.style.backgroundColor = clearedGridColor;
 			isPrintAction = false;
 		}
 		else{
 			cell.style.backgroundColor = "red";
 			isPrintAction = true;
 		}
+	}
+	
+	function ShapesEditor(){
+		alert("BKLEAUYFJBSDKG");
+		HideMapEditor();
+		SetupShapesEditor();
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +145,7 @@
 			// add the row to the end of the table body
 			tblBody.appendChild(row);
 		}
-
+		
 		// put the <tbody> in the <table> and appends into <body>
 		tbl.appendChild(tblBody);
 		body.appendChild(tbl);
@@ -142,5 +153,7 @@
 		
 		return tbl;
 	}
+	
+
 	
 ////////////////////////////////////////////////////////////////////////////////////

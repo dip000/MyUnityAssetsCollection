@@ -16,13 +16,15 @@
 		const FREE = false;
 		function GetOccupancyOfCoordenates(coordenates){
 			//If at least one coordenate is occupied, then return occupied
-            for(var i=0; i<coordenates.x.length; i++){
-				if(occupancyMap[coordenates.x[i]][coordenates.y[i]] == OCCUPIED){
-					console.log("Coordenates are occupied:");
-					console.log(coordenates);
-					return OCCUPIED;
+			try{
+				for(var i=0; i<coordenates.x.length; i++){
+					if(occupancyMap[coordenates.x[i]][coordenates.y[i]] == OCCUPIED){
+						console.log("Coordenates are occupied:");
+						console.log(coordenates);
+						return OCCUPIED;
+					}
 				}
-			}
+			} catch {return OCCUPIED;}
 			console.log("Coordenates are unoccupied:");
 			console.log(coordenates);
 			return FREE;
@@ -99,19 +101,27 @@
 			return null;
 		}
 
+
+
 		function IgnoreOccupiedCoordenates(coordenates){
 			if(coordenates == null) return null;
 			
 			newCoordenates = new Vector2Array();
 			let j=0;
+			let mapLengthX = occupancyMap.length;
+			let mapLengthY = occupancyMap[0].length;
 			
 			for(let i=0; i<coordenates.x.length; i++){
-				if(occupancyMap[coordenates.x[i]][coordenates.y[i]] == FREE){
-					newCoordenates.x[j] = coordenates.x[i];
-					newCoordenates.y[j] = coordenates.y[i];
-					j++;
-				}
+				
+				try{
+					if(occupancyMap[coordenates.x[i]][coordenates.y[i]] == FREE){
+						newCoordenates.x[j] = coordenates.x[i];
+						newCoordenates.y[j] = coordenates.y[i];
+						j++;
+					}
+				} catch{}
 			}
+			
 			//console.log(newCoordenates);
 			return newCoordenates;
 		}
@@ -133,6 +143,7 @@
 			
 			return outputData;
 		}
+		
 
         function download(filename, text) {
             var element = document.createElement('a');
@@ -184,11 +195,11 @@
 			let actionResult = UndoActionFromHistory(itemPlacingInfo);
 			
 			if(actionResult == ActionTypes.deleted){
-				printVisualsOfCoordenates(itemPlacingInfo.coordenates, "white");
+				printVisualsOfCoordenates(itemPlacingInfo.coordenates, clearedGridColor);
 				UpdateOccupancy(itemPlacingInfo.coordenates, FREE);
 			}
 			else{
-				printVisualsOfCoordenates(itemPlacingInfo.coordenates, "green");
+				printVisualsOfCoordenates(itemPlacingInfo.coordenates, itemPlacedColor);
 				UpdateOccupancy(itemPlacingInfo.coordenates, OCCUPIED);
 			}
 		}

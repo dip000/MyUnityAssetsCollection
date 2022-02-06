@@ -14,8 +14,26 @@
             console.log(arrayY)
 			
 			return new Vector2Array(arrayX, arrayY);
-       }
-
+		}
+	   
+		function OccupancyMapToCoordenates(){
+			let coordenates = new Vector2Array();
+			let k = 0;
+			let mapLengthX = occupancyMap.length;
+			let mapLengthY = occupancyMap[0].length;
+			
+            for(var i=0; i<mapLengthX; i++){
+				for(var j=0; j<mapLengthY; j++){
+					if(occupancyMap[i][j] == true){
+						coordenates.x[k] = i;
+						coordenates.y[k] = j;
+						k++;
+					}
+				}
+			}
+			
+			return coordenates;
+		}
 
         function LocalizeCoordenates(vector2){
             var minX = 999;

@@ -9,32 +9,54 @@
 
     <body>
 	
-		<div class="items" id="itemsArea"></div>
-
-		<div class="stats">
-				<span>Item Type: </span><span id='itemType'>0</span><br>
-				<span>Rotation: </span><span id='rotation'>0</span><br>
-				<div ><span>Coordenate: </span><span id='positionX'>0</span> , <span id='positionY'>0</span></div>
-		</div>
+		<table>
+		<tr>
+			<td colspan="2" class="layout">
+				<div class="items" id="itemsArea"></div>
+			</td>
+		</tr>
+		<tr>
+			<td class="layout">
+				<div id='GridGraphics'></div>
+			</td>
+			<td class="layout">
+				<div id='lateralMenuGraphics'></div>
+			</td>
+		</tr>
 		
-		<div class="control">
-			<button class="sideButton downloadButton" onclick='DownloadMap()'><i class="material-icons">download</i> Download</button>
-			<button class="sideButton" onclick='ResetMap()'><i class="material-icons">delete</i> Reset Map</button>
-		</div>
+		</table>
 	
+
+		<div id="statsGraphics"><div class="stats"><span>Item Type: </span><span id='itemType'>0</span><br><span>Rotation: </span><span id='rotation'>0</span><br><div ><span>Coordenate: </span><span id='positionX'>0</span> , <span id='positionY'>0</span></div></div></div>
+		
     </body>
     <script>
         var table;
+        var tableShapes;
         var itemType;
         var rotation;
         var positionX;
         var positionY;
+        var lateralMenu;
+		
+		const itemShowcaseColor = "#1D8742";
+		const itemShadowColor = "#1D874288";
+		const itemPlacedColor = "#1D8742";
+		const clearedGridColor = "white";
+		const itemSelectedColor = "#B9F51B";
+		const itemDefaultColor = "#1D8742";
 		
 		//Test List Of Shapes
 		var listOfShapes = [
 			new Vector2Array([0],[0]),
 			new Vector2Array([0,0],[0,1]),
 			new Vector2Array([0,0,1],[0,1,1])
+		];
+		
+		var listOfShapeNames = [
+			"Box",
+			"Wall",
+			"Corner Wall"
 		];
 		
 		var currentItemPlacingInfo = new ItemPlacingInfo();
@@ -46,6 +68,9 @@
         }
 		
 		function initializeInputsAndOutputs(x, y){
+			lateralMenu = document.getElementById("lateralMenuGraphics");
+			lateralMenu.innerHTML = "<div class='control'><button class='sideButton downloadButton' onclick='DownloadMap()'><i class='material-icons'>download</i> Download</button><button class='sideButton' onclick='ResetMap()'><i class='material-icons'>delete</i> Reset Map</button></div>";
+			
 			AddListenerToScrollWheel(table);
 	
             itemType = document.getElementById('itemType');
@@ -56,9 +81,13 @@
 		
 		function initializeMap(x, y){
 			var tableID = "grid";
+			let grid = document.getElementById("GridGraphics");
             
             table = generate_table(x, y);
 			table.id = tableID;
+			table.className = "gridMap";
+			grid.appendChild(table);
+			
 			cells = document.getElementsByTagName("td");
 			
             AddClickListenerToElement(table);
@@ -67,26 +96,74 @@
 			occupancyMap = Array(x).fill(null).map(()=>Array(y).fill(false));
 		}
 		
+		var shapeElements = [];
 		function initializeItems(){
-            var item;
 			let itemsArea = document.getElementById('itemsArea');
-			let defaultNames = ["Box", "Wall", "Corner Wall"];
 			
 			for(let i=0; i<3; i++){
-				item = generate_table(4, 4);
-				item.innerHTML += defaultNames[i];
+				
+				let item = generate_table(4, 4);
+				
+				let textNode = document.createTextNode(listOfShapeNames[i]);
+				item.appendChild(textNode);
+
 				item.className = "item";
+				
 				itemsArea.appendChild( item );
 				item.addEventListener('click', function(){ ChangeItem(i); } );
 				
 				let coordenates = GlobalizeCoordenates( listOfShapes[i] , 1, 1);
-				printVisualsOfCoordenatesOnTable(coordenates, 'lightGreen', item);
+				printVisualsOfCoordenatesOnTable(coordenates, itemShowcaseColor, item);
 				
+				shapeElements[i] = item;
 			}
+			
+			let textElement = document.createElement("div");
+			let textNode = document.createTextNode("+");
+			textElement.classList.add('addShapeButton');
+			textElement.appendChild(textNode);
+			itemsArea.appendChild(textElement);
+			textElement.addEventListener('click', function(){ ShapesEditor(); } );
+			lastShapeElement = shapeElements[0];
+			ChangeItem(0);
 		}
+		
 		
 ///////////////////// MAIN ////////////////////////////////////////////////////
 		
+		function ResetMap(){
+			
+			let formatedCoordenates = OccupancyMapToCoordenates();
+			printVisualsOfCoordenates(formatedCoordenates, clearedGridColor);
+			
+			historyOfPlacements = null;
+			historyOfPlacements = [];
+			historyIndex = 0;
+			
+			let mapLengthX = occupancyMap.length;
+			let mapLengthY = occupancyMap[0].length;
+			
+			occupancyMap = Array(mapLengthX).fill(null).map(()=>Array(mapLengthY).fill(false));
+			
+			console.log("DELETED MAP INFO:");
+			console.log(formatedCoordenates);
+		}
+		
+		function HideMapEditor(){
+			table.style.display = "none";
+			let lateralButtons = document.getElementsByClassName("control")[0];
+			lateralButtons.style.display = "none";
+		}
+		
+		function SetupShapesEditor(){
+			shapeEditor = true;
+			lateralMenu.innerHTML = "<div class='control'><button class='sideButton downloadButton' onclick='SaveShape()'><i class='material-icons'>save</i> Save</button><button class='sideButton' onclick='GoToMapEditor()'><i class='material-icons'>arrow_back_ios</i> Return</button><button class='sideButton' onclick='ResetShape()'><i class='material-icons'>delete</i> Reset Shape</button></div>";
+			tableShapes = generate_table(10,10);
+			table.removeEventListener();
+		}
+		
+
+
         function OnGridClick(x, y){
 			//Resets Ctrl+Z actions
 			chainedUndoneIndex = 0;
@@ -99,7 +176,7 @@
 				console.log("Clicked on an item. Placing info:");
 				console.log(itemPlacingInfo);
 				DeleteFromHistoryOfPlacements(itemPlacingInfo);
-				printVisualsOfCoordenates(itemPlacingInfo.coordenates, "white");
+				printVisualsOfCoordenates(itemPlacingInfo.coordenates, clearedGridColor);
 				UpdateOccupancy(itemPlacingInfo.coordenates, FREE);
 			}
 			else{
@@ -118,7 +195,7 @@
 			
 			if(GetOccupancyOfCoordenates(coordenates) == FREE){
 				console.log("CorrectPlacement");
-				printVisualsOfCoordenates(coordenates, "green");
+				printVisualsOfCoordenates(coordenates, itemPlacedColor);
 				UpdateOccupancy(coordenates, OCCUPIED);
 				RegisterHistoryOfPlacements(currentItemPlacingInfo);
 			}
@@ -130,11 +207,17 @@
 			console.log(coordenates);
 		}
 
+		var lastShapeElement;
 		function ChangeItem(itemIndex){
+			console.log(shapeElements);
 			currentItemPlacingInfo.itemType = itemIndex;
 			itemType.innerHTML = currentItemPlacingInfo.itemType;
+			
+			lastShapeElement.style.backgroundColor = itemDefaultColor;
+			shapeElements[itemIndex].style.backgroundColor = itemSelectedColor;
+			lastShapeElement = shapeElements[itemIndex];
 		
-			console.log("Item changed to type: " + itemType.value);
+			console.log("Item changed to type: " + itemIndex);
 		}
 	    
 		
