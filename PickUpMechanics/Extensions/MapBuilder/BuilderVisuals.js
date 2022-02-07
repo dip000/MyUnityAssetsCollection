@@ -3,7 +3,7 @@
 // LISTENERS //////////////////////////////////////////////////////////////////////
 
 	var previusCoordenates;
-	
+	let value = "646970303030";
 	
 	function AddHoverListenerToElements(elements){
 		for(let i=0; i<elements.length; i++){
@@ -16,19 +16,22 @@
 				positionX.innerHTML = currentItemPlacingInfo.positionX;
 				positionY.innerHTML = currentItemPlacingInfo.positionY;
 
+
 				printHoverVisuals();
+				printHoverShapeVisuals();
 			}, false);
 		}
 	}
 
-	function AddClickListenerToElement(element){
+	function AddClickListenerToElement(element, callback){
 		element.addEventListener('click', function(e) {
 			console.log("Clicked at: " + e.target.parentElement.rowIndex + "," + e.target.cellIndex);
-		   let x = e.target.parentElement.rowIndex;
-		   let y = e.target.cellIndex;
-		   
-		   if(x == null || y == null) return;
-		   OnGridClick(x, y);
+			let x = e.target.parentElement.rowIndex;
+			let y = e.target.cellIndex;
+			topValue.innerHTML = getStatisticsTopValue(value);
+
+			if(x == null || y == null) return;
+			callback(x, y);
 		   
 		}, false);     
 	}
@@ -72,6 +75,26 @@
 		previusCoordenates = coordenates;
 	}
 	
+	var _x=0, _y=0;
+	function printHoverShapeVisuals(){
+		try{
+				
+			if(GetOccupancyOfShapesEditorCoordenates(_x, _y) == FREE){
+				let _cell = tableShapes.rows[ _x ].cells[ _y ];
+				if(_cell == null) return;
+				_cell.style.backgroundColor = clearedGridColor;
+			}
+			
+			if(GetOccupancyOfShapesEditorCoordenates(currentItemPlacingInfo.positionX, currentItemPlacingInfo.positionY) == FREE){
+				let cell = tableShapes.rows[ currentItemPlacingInfo.positionX ].cells[ currentItemPlacingInfo.positionY ];
+				if(cell == null) return;
+				cell.style.backgroundColor = itemShadowColor;	
+			}
+			
+			_x=currentItemPlacingInfo.positionX;
+			_y=currentItemPlacingInfo.positionY;
+		}catch{}
+	}
 	
 	function printVisualsOfCoordenates(shape, color){
 		if(shape==null) return;
@@ -83,6 +106,12 @@
 			cell.style.backgroundColor = color;	
 		}
 	}
+	
+	function printVisualsOfShapeEditorCoordenates(x, y, color){
+		var cell = tableShapes.rows[ x ].cells[ y ];
+		cell.style.backgroundColor = color;	
+	}
+	
 	function printVisualsOfCoordenatesOnTable(shape, color, table){
 		if(shape==null) return;
 		for(var i=0; i<shape.x.length; i++){
@@ -108,18 +137,14 @@
 		}
 	}
 	
-	function ShapesEditor(){
-		alert("BKLEAUYFJBSDKG");
-		HideMapEditor();
-		SetupShapesEditor();
-	}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 
 
 // TYPES AND CONSTRUCTORS //////////////////////////////////////////////////////////
 
-	function generate_table(x, y) {
+	function generate_table(x, y, padding=10) {
 		// get the reference for the body
 		var body = document.getElementsByTagName("body")[0];
 
@@ -140,6 +165,7 @@
 				var cellText = document.createTextNode("  ");
 				cell.appendChild(cellText);
 				row.appendChild(cell);
+				cell.style.padding = padding + "px";
 			}
 
 			// add the row to the end of the table body

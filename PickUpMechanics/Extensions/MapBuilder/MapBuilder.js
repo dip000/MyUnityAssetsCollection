@@ -301,7 +301,6 @@ function OutputData(){
 			this.positionsY[j] = historyOfPlacements[i].positionY;
 			j++;
 		}
-		
 	}
 }
 

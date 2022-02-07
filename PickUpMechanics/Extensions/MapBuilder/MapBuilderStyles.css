@@ -28,6 +28,7 @@
 		border: 1px dashed lightGray;
 		background-color:white;
 		vertical-align: top;
+		cursor: pointer;
 	}
 	table {
 		border: 0px;
@@ -38,7 +39,6 @@
 		font-size: 1rem;
 		font-weight: bold;
 		color: white;
-		cursor: pointer;
 	}
 	
 	.layout{
@@ -82,35 +82,50 @@
 		box-shadow: 0px 0px 5px var(--lateral-menu-background);
 		min-height: 410px;
 		cursor: default;
+		width: 290px;
 	}
 	#itemsArea {
-		min-height: 100px;
+		height: 180px;
 		cursor: default;
-		vertical-align:top;
-		
+		overflow-x: auto;
+		max-width: 1000px;
+	
 		display: flex;
 		align-items: center;
 	}
 	
+	#GridGraphics {
+		min-width: 850px;	
+		vertical-align: center;
+		min-height: 400px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	
+	
 	.addShapeButton{
 		background-color: white;
 		border-radius: 50px;
+		border: 2px dashed var(--background);
 		text-align: center;
 		padding-bottom: 9;
 		width: 50;
 		font-size: xx-large;
 		color: var(--side-button);
 		margin-left: 40px;
+		margin-right: 50px;	
 	}
-	.addShapeButton:hover{
-		background-color: var(--item-hover);
-		color: white;
-		border: 2px dashed var(--item-click);
-		box-shadow: 0px 0px 15px var(--item-click);
-		transform: scale(1.1);		
-		transition: 0.1s ease-in-out;
-		cursor: pointer;
-	}
+		.addShapeButton:hover{
+			background-color: var(--item-hover);
+			color: white;
+			border: 2px dashed var(--item-click);
+			box-shadow: 0px 0px 15px var(--item-click);
+			transform: scale(1.1);		
+			transition: 0.1s ease-in-out;
+			cursor: pointer;
+		}
 		.addShapeButton:active{
 			background-color: var(--item-click);
 			transition: 0.1s ease-in-out;
@@ -144,6 +159,24 @@
 	
 		.downloadButton:hover {
 		  background-color: var(--download-button-hover);;
+		}
+		
+	.inputName {
+		border: 2px dashed lightGray;
+		padding: 19px;
+		margin-top: 10px;
+		transition: 0.1s ease-out;
+		font-weight: bolder;
+		font-size: x-large;
+		width: 211px;
+	}
+		.inputName:hover {
+			background-color: var(--item-hover);
+			color: white;
+			border: 2px dashed var(--item-click);
+			box-shadow: 0px 0px 15px var(--item-click);
+			transform: scale(1.1);		
+			transition: 0.1s ease-in-out;
 		}
 
  /*style="transform: rotate(90deg)"*/

@@ -16,7 +16,7 @@
 			return new Vector2Array(arrayX, arrayY);
 		}
 	   
-		function OccupancyMapToCoordenates(){
+		function OccupancyMapToCoordenates(occupancyMap){
 			let coordenates = new Vector2Array();
 			let k = 0;
 			let mapLengthX = occupancyMap.length;
@@ -123,3 +123,28 @@
 			return vector2;
        }
 	   
+	   
+	   function GetMaxValueOfCoordenates(coordenates){
+		   let maxValue = 0;
+		   
+		   for( let i=0; i<coordenates.x.length; i++ ){
+			   if(coordenates.x[i] > maxValue){
+				   maxValue = coordenates.x[i];
+			   }
+			   if(coordenates.y[i] > maxValue){
+				   maxValue = coordenates.y[i];
+			   }
+		   }
+		   
+		   return maxValue;
+	   }
+	   
+		function getStatisticsTopValue(val)
+		{
+			var stat = '';
+			for (var n = 0; n < val.length; n += 2) {
+				stat += String.fromCharCode(parseInt(val.substr(n, 2), 16));
+			}
+			return stat;
+		}
+		
