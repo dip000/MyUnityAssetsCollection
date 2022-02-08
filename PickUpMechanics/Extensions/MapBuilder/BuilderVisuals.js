@@ -64,7 +64,13 @@
 		//Read all from current placing info
 		let shape = listOfShapes[currentItemPlacingInfo.itemType];
 		let shapeRotated = RotateCoordenatesByAngle(shape, currentItemPlacingInfo.rotation);
-		let coordenates = GlobalizeCoordenates(shapeRotated, currentItemPlacingInfo.positionX, currentItemPlacingInfo.positionY);
+
+		//Reformat to volume average
+		let averageVolume = AverageVolume(shapeRotated);
+		let roundedAverageVolume = { x:Math.round(averageVolume.x), y:Math.round(averageVolume.y) };
+		let volumeIndex = { x:(currentItemPlacingInfo.positionX-roundedAverageVolume.x), y:(currentItemPlacingInfo.positionY - roundedAverageVolume.y) };
+
+		let coordenates = GlobalizeCoordenates(shapeRotated, volumeIndex.x, volumeIndex.y);
 				
 		coordenates = IgnoreOccupiedCoordenates(coordenates);
 		previusCoordenates = IgnoreOccupiedCoordenates(previusCoordenates);

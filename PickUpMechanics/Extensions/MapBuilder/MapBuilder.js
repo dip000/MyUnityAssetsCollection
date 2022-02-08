@@ -144,6 +144,22 @@
 			return outputData;
 		}
 		
+		function formatShapes(){
+			let output = "";
+			for( let i=0; i<listOfShapes.length; i++){
+				let shapeFormated = RotateCoordenatesByAngle( listOfShapes[i], 90 );
+				
+				let outputShape = {
+					itemName : listOfShapeNames[i],
+					localCoordenatesX : shapeFormated.x,
+					localCoordenatesY : shapeFormated.y
+				};
+				output += JSON.stringify(outputShape);
+				output += "&";
+			}
+			
+			return output;
+		}
 
         function download(filename, text) {
             var element = document.createElement('a');

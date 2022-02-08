@@ -258,12 +258,34 @@
         }
 		
 		
+		//Sooo. i know is confusing but here goes:
+		// 1. Average volume of an object is its center position. Not the bounding box center
+		// 2. Here changes the index-position for the center-volume-position of the object so it visualy rotates from its center
+		// 3. The (rows, columns) system is different from the (x, y) system by 90 degrees or (-y, x)
+		// 4. We need to register the index position as it was taken by a (x,y) system, so it changes again the index-position-row-col to index-position-xy
+		// 5. Summary; internally we're using (row,col) as original detection of coordenates. Volume-center to place the visuals. And standar (x,y) as output
 		function PlaceItemAtCurrentItemInfo(){
-			//make info
+			
 			let shape = listOfShapes[currentItemPlacingInfo.itemType];
 			let shapeRotated = RotateCoordenatesByAngle(shape, currentItemPlacingInfo.rotation);
-			let coordenates = GlobalizeCoordenates(shapeRotated, currentItemPlacingInfo.positionX, currentItemPlacingInfo.positionY);
+			
+			//Reformat to volume average
+			let averageVolume = AverageVolume(shapeRotated);
+			let roundedAverageVolume = { x:Math.round(averageVolume.x), y:Math.round(averageVolume.y) };
+			let volumeIndex = { x:(currentItemPlacingInfo.positionX-roundedAverageVolume.x), y:(currentItemPlacingInfo.positionY - roundedAverageVolume.y) };
+
+			//make info
+			let coordenates = GlobalizeCoordenates(shapeRotated, volumeIndex.x, volumeIndex.y);
 			currentItemPlacingInfo.coordenates = coordenates;
+			
+			//Standar (x,y) system for ouputting
+			let minValues = GetMinValuesOfCoordenates(coordenates)
+			currentItemPlacingInfo.positionX = minValues.x;
+			currentItemPlacingInfo.positionY = minValues.y;
+			
+			console.log(averageVolume);
+			console.log(roundedAverageVolume);
+			console.log(volumeIndex);
 			
 			if(GetOccupancyOfCoordenates(coordenates) == FREE){
 				console.log("CorrectPlacement");
@@ -295,13 +317,15 @@
 		
 		function DownloadMap(){
 		
-			let outputData = formatCoordenates();
+			let outputData = JSON.stringify( formatCoordenates() );
+			let ouputShapes = formatShapes();
 			
 			console.log("DOWNLOADED:");
 			console.log(outputData);
-            download("test"+ ".json", JSON.stringify(outputData));
-        }	
+            download("test"+ ".json", outputData + "$" + ouputShapes);
+        }
 /////////////////////////////////////////////////////////////////////////
+
 
 
     </script>

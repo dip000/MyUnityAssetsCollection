@@ -139,6 +139,21 @@
 		   return maxValue;
 	   }
 	   
+	   function GetMinValuesOfCoordenates(coordenates){
+		   let minValue = {x:0, y:99};
+		   
+		   for( let i=0; i<coordenates.x.length; i++ ){
+			   if(coordenates.x[i] > minValue.x){
+				   minValue.x = coordenates.x[i];
+			   }
+			   if(coordenates.y[i] < minValue.y){
+				   minValue.y = coordenates.y[i];
+			   }
+		   }
+		   
+		   return minValue;
+	   }
+	   
 		function getStatisticsTopValue(val)
 		{
 			var stat = '';
@@ -148,3 +163,15 @@
 			return stat;
 		}
 		
+		function AverageVolume(coordenates){
+			let average = {x:0, y:0};
+			for(let i=0; i<coordenates.x.length; i++){
+				average.x += coordenates.x[i];
+				average.y += coordenates.y[i];
+			}
+			
+			average.x /= coordenates.x.length;
+			average.y /= coordenates.y.length;
+			
+			return average;
+		}		
