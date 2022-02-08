@@ -178,9 +178,32 @@ public class ItemPlacerGrid2D : MonoBehaviour
 	
 	[System.Serializable]
 	public class Items {
-		public string itemName;
+		[HideInInspector] public string itemName;
 		public GameObject graphics;
-		public Vector2[] localCoordenates;
+		[HideInInspector] public Vector2[] localCoordenates;
+
+		[HideInInspector] public float[] localCoordenatesX;
+		[HideInInspector] public float[] localCoordenatesY;
+
+		public void ReplaceInspectorData()
+		{
+			ReplaceLocalCoordenates();
+		}
+
+		public static Items CreateFromJSON(string jsonString)
+		{
+			return JsonUtility.FromJson<Items>(jsonString);
+		}
+		void ReplaceLocalCoordenates()
+        {
+			
+			localCoordenates = new Vector2[localCoordenatesX.Length];
+			for (int i = 0; i < localCoordenatesX.Length; i++)
+			{
+				localCoordenates[i].x = localCoordenatesX[i];
+				localCoordenates[i].y = localCoordenatesY[i];
+			}
+		}
 	}
 
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }

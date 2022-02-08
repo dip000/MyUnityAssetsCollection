@@ -188,7 +188,6 @@ public class PickUpMechanics : MonoBehaviour
 		for(var i=0; i<pickupCondition.Count; i++){
 			if (pickupCondition[i] != null){
 				result &= (bool)pickupCondition[i].GetValue(pickupConditionInstance[i], null);
-				Debuger("Condition n:" + result);
 			}
 		}
         return result;
@@ -201,7 +200,6 @@ public class PickUpMechanics : MonoBehaviour
 		for(var i=0; i<dropCondition.Count; i++){
 			if (dropCondition[i] != null){
 				result &= (bool)dropCondition[i].GetValue(dropConditionInstance[i], null);
-				Debuger("Condition n:" + result);
 			}
 		}
         return result;

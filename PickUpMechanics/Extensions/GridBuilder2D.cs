@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[DefaultExecutionOrder(-200)]
+/*
+ * TODO:
+ *		1. 
+*/
+
 public class GridBuilder2D : MonoBehaviour
 {
 	public Vector2 containers = new Vector2(3,2);
@@ -52,7 +56,7 @@ public class GridBuilder2D : MonoBehaviour
 		for (int i=0; i<containers.x; i++){			
 			for(int j=0; j<containers.y; j++){
 				GameObject instance = Instantiate(graphics, graphicsParent.transform);
-				instance.transform.localScale = new Vector3( containersSize.x, containersSize.y, containersSize.z );
+				instance.transform.localScale = containersSize;
 				instance.name = "Container " + i + "-" + j;
 				
 				Vector3 objectPosition = Vector3.zero;

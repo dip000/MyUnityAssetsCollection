@@ -63,6 +63,8 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 		{
 			int x = (int)coordenatesOfItem[i].x;
 			int y = (int)coordenatesOfItem[i].y;
+
+			print("(X,Y): "+x+","+y);
 			
 			//If one coordenate is at the front, that's a pass
 			if (y == 0)
@@ -70,7 +72,7 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 				return true;
 			}
 
-			//If its at the back, it must have at least one free slot in front
+			//If it is at the back, it must have at least one free slot in front
 			else if(map[x, y-1] == PickUpMechanics.free)
 			{
 				Debuger("Pick up condition (Custom Fridge-Type) of having a free slot in front row was a success");

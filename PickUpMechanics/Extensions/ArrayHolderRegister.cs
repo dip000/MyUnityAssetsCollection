@@ -73,7 +73,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Vector2 indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
 
 		Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
-		ArrayDebuger(localCoordenates, "Local coordenates test");
+		//ArrayDebuger(localCoordenates, "Local coordenates test");
 		
 		item.SetCoordenates( globalCoordenates, indexCoordenatesDisplaced);
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.occupied);
@@ -99,14 +99,14 @@ public class ArrayHolderRegister : MonoBehaviour {
 		localCoordenates.CopyTo(globalizedCoordenates, 0);
 		
 		globalizedCoordenates = ReferenceCoordenates(globalizedCoordenates, referenceCoordenate);
-		ArrayDebuger(globalizedCoordenates, "Globalized coordenates of item in hand");
+		//ArrayDebuger(globalizedCoordenates, "Globalized coordenates of item in hand");
 		return globalizedCoordenates;
 	}
 
 	Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 referenceCoordenate)
     {
 		ReferenceCoordenates(globalCoordenates, -referenceCoordenate);
-		ArrayDebuger(globalCoordenates, "Localized coordenates of item in hand");
+		//ArrayDebuger(globalCoordenates, "Localized coordenates of item in hand");
 		return globalCoordenates;
 	}
 	
@@ -170,7 +170,7 @@ public class ArrayHolderRegister : MonoBehaviour {
 		containerSpacePosition.y = 0;
 		Vector3 worldSpacePosition = containerSpacePosition;
 		
-		Debuger("average of placed object: " + containerSpacePosition + "; worldSpacePosition: " + worldSpacePosition);
+		Debuger("worldSpacePosition placement: " + worldSpacePosition);
 		return worldSpacePosition;
 	}
 

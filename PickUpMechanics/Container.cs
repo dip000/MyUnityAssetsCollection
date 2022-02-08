@@ -11,7 +11,7 @@ public class Container : MonoBehaviour
 	public Pickupable objectInside { get; private set; }
 	[HideInInspector] public bool isBlocked = false;
 	
-	//Interesting bug if i declare this withouth private set..
+	//Interesting bug if i declare this without private set..
 	public bool finishedInitializing {get; private set;} = false;
 	public bool yieldControlToExternal {get; private set;} = false;
 
