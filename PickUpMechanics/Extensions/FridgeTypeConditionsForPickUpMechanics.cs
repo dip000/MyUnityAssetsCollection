@@ -57,7 +57,8 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 	bool EvaluateDropCondition(){
 		UpdateLookUpVariables();
 
-		Vector2[] coordenatesOfItem = PickUpMechanics.handObject.coordenates;
+		arrayHolderRegister.UpdateDropPlacement();
+		Vector2[] coordenatesOfItem = arrayHolderRegister.globalCoordenates;
 
 		for (int i = 0; i < coordenatesOfItem.Length; i++)
 		{
