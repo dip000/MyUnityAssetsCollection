@@ -8,36 +8,40 @@ public class ItemPlacerGrid2D : MonoBehaviour
 {
 	
 	public Items[] items;
+	GridBuilder2D.Maps map;
 	GridBuilder2D gridBuilder;
 	Transform[] instances;
 	
 	//TEST
-	public int[] itemInstructionIndexes = {0};
+	public int[] itemTypes = {0};
 	public Vector2[] itemPositions = {Vector2.zero};
 	public int[] itemRotations = {0};
 
-
-    public void Setup(Items[] _items, int[] _itemIndexes, Vector2[] _positionIndexes, int[] _itemRotations)
+    public void SetupItems(Items[] _items)
     {
 		items = _items;
-		itemInstructionIndexes = _itemIndexes;
-		itemPositions = _positionIndexes;
-		itemRotations = _itemRotations;
+	}
+    public void ReadFromMap(GridBuilder2D.Maps _map)
+    {
+		map = _map;
+		itemTypes = _map.itemTypes;
+		itemPositions = _map.itemPositions;
+		itemRotations = _map.itemRotations;
 	}
 
-    [ContextMenu("Place Items")]
+	[ContextMenu("Place Items")]
 	public void PlaceItems(){
 
 		//ResetItems();
-		instances = new Transform[ itemInstructionIndexes.Length ];
+		instances = new Transform[ itemTypes.Length ];
 		
 		var placeholder = GameObject.CreatePrimitive(PrimitiveType.Cube);
 		placeholder.name = "Original Item";
 		
 		gridBuilder = GetComponent<GridBuilder2D>();
 		
-		for(int i=0; i<itemInstructionIndexes.Length; i++){
-			var itemIndex = itemInstructionIndexes[i];
+		for(int i=0; i<itemTypes.Length; i++){
+			var itemIndex = itemTypes[i];
 			var item = items[ itemIndex ];
 			var graphics = item.graphics;
 
@@ -47,12 +51,9 @@ public class ItemPlacerGrid2D : MonoBehaviour
 				graphics = placeholder;
 			}
 
-			//Only by 90 degrees and max 3 times
-			int rotationTimes = (int)(itemRotations[i] / 90) % 4;
-			int rotationAngleClamp = rotationTimes * 90;
-
 			//Rotate and Globalize coordenates
-			Vector2[] localCoordenates = RotateMatrixTimes(item.localCoordenates, rotationTimes);
+			int rotationAngleClamp = itemRotations[i];
+			Vector2[] localCoordenates = RotateMatrixAngle(item.localCoordenates, itemRotations[i]);
 			Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, itemPositions[i]);
 			Vector2 average = BoundingBoxAverageOfCoordenates(localCoordenates);
 
@@ -67,8 +68,9 @@ public class ItemPlacerGrid2D : MonoBehaviour
 			int yIndex = (int)itemPositions[i].y;
 
 			//Apply transforms and properties
+			//Goddamn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
 			Container container = gridBuilder.instances[xIndex, yIndex];
-			GameObject itemInstance = Instantiate(graphics, position, Quaternion.Euler(0, rotationAngleClamp, 0) );
+			GameObject itemInstance = Instantiate(graphics, position, Quaternion.Euler(0, 360 - rotationAngleClamp, 0) );
 			itemInstance.name = item.itemName;
 			itemInstance.AddComponent<Pickupable>();
 
@@ -120,6 +122,23 @@ public class ItemPlacerGrid2D : MonoBehaviour
 		return coordenates;
 	}
 
+	Vector2[] RotateMatrixAngle(Vector2[] vector, int angle)
+	{
+		//Only by 90 degrees and max 3 times
+		if (angle < 0)
+		{
+			angle = 4 - (angle % 360) / 90;
+		}
+		else
+		{
+			angle = -(angle % 360) / 90;
+		}
+
+		if (angle == 4)
+			return vector;
+
+		return RotateMatrixTimes(vector, angle);
+	}
 	Vector2[] RotateMatrixTimes(Vector2[] vector, int times) {
 
 		Vector2[] vectorOut = new Vector2[vector.Length];

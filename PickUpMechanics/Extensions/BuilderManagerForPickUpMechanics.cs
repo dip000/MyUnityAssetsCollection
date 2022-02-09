@@ -32,16 +32,21 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
 	ArrayHolderRegister arrayHolderRegister;
 	RotateObjectOnHand rotateObjectOnHand;
 	
-	
-    private void Awake()
+	void Awake()
+    {
+        FindComponents();
+    }
+    private void FindComponents()
     {
         gridBuilder2D = GetComponent<GridBuilder2D>();
         itemPlacerGrid2D = GetComponent<ItemPlacerGrid2D>();
         rotateObjectOnHand = GetComponent<RotateObjectOnHand>();
     }
 
-    void Start()
+    [ContextMenu("Build Test")]
+    void BuildTest()
     {
+        FindComponents();
         //UNDER TESTING////
         if (configurationsFile)
         {
@@ -52,22 +57,33 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
         MakeLevel(0);
     }
 
+
     void UseExternalConfigurations()
     {
-        if (mapsFile)
-        {
-            maps = new Maps[numberOfMaps];
-            maps[0] = Maps.CreateFromJSON(mapsFile.text);
-            maps[0].ReplaceInspectorData();
-        }
-        if (itemsFile)
-        {
-            string[] itemFiles = itemsFile.text.Split('&');
+        //Configuration file syntax is {mapInfo}${item1Info}&{item2Info}&{...}
+        string[] parsedFiles = configurationsFile.text.Split('$');
+        string mapInfo = parsedFiles[0];
+        string[] itemInfo = parsedFiles[1].Split('&');
+        int numberOfItems = itemInfo.Length;
 
-            items = new ItemPlacerGrid2D.Items[numberOfMaps];
-            items[0] = ItemPlacerGrid2D.Items.CreateFromJSON(itemFiles[0]);
-            items[0].ReplaceInspectorData();
+        //Accepts only one map right now
+        if (maps.Length != 0)
+            maps = new Maps[1];
+
+        maps[0] = Maps.CreateFromJSON(mapInfo);
+        maps[0].ReplaceInspectorData();
+
+        //Items declared, will use its graphics. Items not declared will create them from scratch
+        for (int i=0; i< numberOfItems; i++)
+        {
+            
         }
+
+        if (items.Length == 0)
+            items = new ItemPlacerGrid2D.Items[numberOfItems-1]; //NOTE: Minus 1 because Output JSON creates an "&" at the end that interprets it as another item but that is a bug from WebBuilder
+
+        items[0] = ItemPlacerGrid2D.Items.CreateFromJSON(itemInfo[0]);
+        items[0].ReplaceInspectorData();
     }
 
     public void MakeLevel(int level)
@@ -83,7 +99,7 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
 		Vector3 containersSize = new Vector3(0.9f, 0.9f, 0.9f);
 		
         gridBuilder2D.Setup(maps[level].mapSize, containersSize, margin);
-        itemPlacerGrid2D.Setup(items, maps[level].itemInstructionIndexes, maps[level].itemPositions, maps[level].itemRotations);
+        //itemPlacerGrid2D.Setup(items, maps[level].itemTypes, maps[level].itemPositions, maps[level].itemRotations);
 
 		//Give build instruction
         gridBuilder2D.BuildGrid();
@@ -111,7 +127,7 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
         //Look ups
         Vector2[] itemPositions = maps[level].itemPositions;
         Vector2 mapSize = maps[level].mapSize;
-        int numberOfinstructions = maps[level].itemInstructionIndexes.Length;
+        int numberOfinstructions = maps[level].itemTypes.Length;
 
         //Soft Checks
         if (itemPositions == null)
@@ -122,8 +138,8 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
 
         if (mapSize == Vector2.zero)
         {
-            Debug.LogWarning("BUILDER MANAGER. mapSize is zero. Will build a 2x2 map");
-            maps[level].mapSize = new Vector2(2,2);
+            Debug.LogWarning("BUILDER MANAGER. mapSize is zero. Will build a 10x10 map");
+            maps[level].mapSize = new Vector2(10,10);
         }
 
         if (itemPositions.Length != numberOfinstructions)
@@ -143,7 +159,7 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
     public class Maps
     {
         public string mapName;
-        public int[] itemInstructionIndexes;
+        public int[] itemTypes;
         public int[] itemRotations;
         public Vector2[] itemPositions;
         public Vector2 mapSize;
@@ -151,8 +167,8 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
         [HideInInspector] public float mapSizeX;
         [HideInInspector] public float mapSizeY;
 
-        [HideInInspector] public float[] itemPositionsX;
-        [HideInInspector] public float[] itemPositionsY;
+        [HideInInspector] public float[] positionsX;
+        [HideInInspector] public float[] positionsY;
 
         public void ReplaceInspectorData()
         {
@@ -172,11 +188,11 @@ public class BuilderManagerForPickUpMechanics : MonoBehaviour
 
         void ReplaceItemPositions()
         {
-            itemPositions = new Vector2[itemPositionsX.Length];
-            for (int i=0; i < itemPositionsX.Length; i++)
+            itemPositions = new Vector2[positionsX.Length];
+            for (int i=0; i < positionsX.Length; i++)
             {
-                itemPositions[i].x = itemPositionsX[i];
-                itemPositions[i].y = itemPositionsY[i];
+                itemPositions[i].x = positionsX[i];
+                itemPositions[i].y = positionsY[i];
             }
         }
     }

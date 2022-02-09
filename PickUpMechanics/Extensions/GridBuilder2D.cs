@@ -9,10 +9,12 @@ using UnityEngine;
 
 public class GridBuilder2D : MonoBehaviour
 {
+	public Maps[] maps;
+
 	public Vector2 containers = new Vector2(3,2);
 	public Vector3 containersSize = new Vector3(0.8f,0.8f, 0.8f);
 	public float margin = 0.2f;
-	
+
 	public GameObject containerGraphics;
 	public GameObject holderOfContainers;
 
@@ -91,7 +93,48 @@ public class GridBuilder2D : MonoBehaviour
 		DestroyImmediate(graphicsParent);
 		instances = new Container[0,0];
 	}
-	
+
+	//[System.Serializable]
+	public class Maps
+	{
+		public string mapName;
+		public int[] itemTypes;
+		public int[] itemRotations;
+		public Vector2[] itemPositions;
+		public Vector2 mapSize;
+
+		public float mapSizeX;
+		public float mapSizeY;
+
+		public float[] positionsX;
+		public float[] positionsY;
+
+		public void ReplaceInspectorData()
+		{
+			ReplaceItemPositions();
+			ReplaceMapSize();
+		}
+
+		public static Maps CreateFromJSON(string jsonString)
+		{
+			return JsonUtility.FromJson<Maps>(jsonString);
+		}
+
+		void ReplaceMapSize()
+		{
+			mapSize = new Vector2(mapSizeX, mapSizeY);
+		}
+
+		void ReplaceItemPositions()
+		{
+			itemPositions = new Vector2[positionsX.Length];
+			for (int i = 0; i < positionsX.Length; i++)
+			{
+				itemPositions[i].x = positionsX[i];
+				itemPositions[i].y = positionsY[i];
+			}
+		}
+	}
 	public bool showDebugs; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 
 }

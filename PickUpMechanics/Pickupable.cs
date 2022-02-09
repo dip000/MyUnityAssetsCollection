@@ -10,8 +10,9 @@ public class Pickupable : MonoBehaviour
 	//Global coordenates of the current position being occupied
     public Vector2[] coordenates { get; private set; }
 
-	//Position of this item where it was dropped. ArrayHolderRegister uses the volume center
-    public Vector2 coordenateIndex { get; private set; }
+	//Position of this item where it was dropped
+	//ArrayHolderRegister uses the lowest point in X and Y of coordenates variable
+	public Vector2 coordenateIndex { get; private set; }
     public Container myContainer { get; private set; }
 
 	public void ResetOccupancy(){

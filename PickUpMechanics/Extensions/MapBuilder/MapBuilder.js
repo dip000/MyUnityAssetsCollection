@@ -133,6 +133,7 @@
 			
 			let outputData = new OutputData();
 			outputData.generateFromHistory();
+			outputData.generateFromMap();
 		
 			let formatedCoordenates = new Vector2Array(outputData.positionsX, outputData.positionsY);
 			formatedCoordenates = LocalizeCoordenates(formatedCoordenates);
@@ -147,7 +148,7 @@
 		function formatShapes(){
 			let output = "";
 			for( let i=0; i<listOfShapes.length; i++){
-				let shapeFormated = RotateCoordenatesByAngle( listOfShapes[i], 90 );
+				let shapeFormated = RotateCoordenatesByAngle( listOfShapes[i], -90 );
 				
 				let outputShape = {
 					itemName : listOfShapeNames[i],
@@ -155,7 +156,9 @@
 					localCoordenatesY : shapeFormated.y
 				};
 				output += JSON.stringify(outputShape);
-				output += "&";
+				
+				if(i != listOfShapes.length-1)
+					output += "&";
 			}
 			
 			return output;
@@ -294,7 +297,9 @@ function OutputData(){
 	this.itemRotations;
 	this.positionsX;
 	this.positionsY;
-	
+	this.mapSizeX;
+	this.mapSizeY;
+
     this.generateFromHistory = function(){
 		let numberOfInstructions = historyOfPlacements.length;
 		this.itemTypes = [];
@@ -317,6 +322,38 @@ function OutputData(){
 			this.positionsY[j] = historyOfPlacements[i].positionY;
 			j++;
 		}
+	}
+
+	this.generateFromMap = function(){
+		let mapLengthX = occupancyMap.length;
+		let mapLengthY = occupancyMap[0].length;
+		let minX = 999;
+		let minY = 999;
+		let maxX = 0;
+		let maxY = 0;
+
+		for(let i=0; i<mapLengthX; i++){
+			for(var j=0; j<mapLengthY; j++){
+				if( occupancyMap[i][j] == OCCUPIED){
+					if(i < minX){
+						minX = i;
+					}
+					if(i > maxX){
+						maxX = i;
+					}
+
+					if(j < minY){
+						minY = j;
+					}
+					if(j > maxY){
+						maxY = j;
+					}
+				}
+			}
+		}
+
+		this.mapSizeX = maxY - minY + 1;
+		this.mapSizeY = maxX - minX + 1;
 	}
 }
 

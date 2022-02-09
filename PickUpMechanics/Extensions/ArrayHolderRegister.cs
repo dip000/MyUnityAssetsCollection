@@ -64,17 +64,10 @@ public class ArrayHolderRegister : MonoBehaviour {
 
 	//------------------------ LIVE REGISTER -------------------------------------
 	void OnDrop(){
-		Pickupable item = PickUpMechanics.handObject;
-		Container container = PickUpMechanics.targetContainer;
-		
-		Vector2 indexCoordenates = container.coordenates;
-		Vector2 volumeAverage = VolumeAverageOfCoordenates(localCoordenates);
-		Vector2 volumeAverageRounded = RoundVector(volumeAverage);
-		Vector2 indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
+		UpdateDropPlacement();
 
-		Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
-		//ArrayDebuger(localCoordenates, "Local coordenates test");
-		
+		Pickupable item = PickUpMechanics.handObject;
+
 		item.SetCoordenates( globalCoordenates, indexCoordenatesDisplaced);
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.occupied);
 		
@@ -90,6 +83,21 @@ public class ArrayHolderRegister : MonoBehaviour {
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.free);
 
 		localCoordenates = LocalizeCoordenates(globalCoordenates, item.coordenateIndex);
+	}
+
+	public Vector2 indexCoordenatesDisplaced;
+	public Vector2[] globalCoordenates;
+	public void UpdateDropPlacement()
+    {
+		Container container = PickUpMechanics.targetContainer;
+
+		Vector2 indexCoordenates = container.coordenates;
+		Vector2 volumeAverage = VolumeAverageOfCoordenates(localCoordenates);
+		Vector2 volumeAverageRounded = RoundVector(volumeAverage);
+		indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
+
+		globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
+		//ArrayDebuger(localCoordenates, "Local coordenates test");
 	}
 
 
