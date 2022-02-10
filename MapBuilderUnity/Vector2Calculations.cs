@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class MapBuilderCalculations : object
+public static class Vector2Calculations : object
 {
 	public static Vector2 BoundingBoxAverageOfCoordenates(Vector2[] coordenates)
 	{
@@ -10,47 +10,49 @@ public static class MapBuilderCalculations : object
 
 		for (int i = 0; i < coordenates.Length; i++)
 		{
-
 			if (coordenates[i].x > averageOfLocalCoordenates.x)
-			{
 				averageOfLocalCoordenates.x = coordenates[i].x;
-			}
+
 			if (coordenates[i].y > averageOfLocalCoordenates.y)
-			{
 				averageOfLocalCoordenates.y = coordenates[i].y;
-			}
 		}
 
+		//The middle of the farthest point in X,Y is the bounding box center
 		averageOfLocalCoordenates *= 0.5f;
-
 		return averageOfLocalCoordenates;
 	}
 
-	public static Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 positionIndex){
-		Vector2[] coordenates = new Vector2[ localCoordenates.Length ];
-		
-		for(int i=0; i<localCoordenates.Length; i++){
-			coordenates[i] = localCoordenates[i] + positionIndex;
-		}
+	static Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 reference)
+    {
+		Vector2[] referenced= new Vector2[coordenates.Length];
+
+		for (int i = 0; i < coordenates.Length; i++)
+			referenced[i] = coordenates[i] + reference;
 		return coordenates;
+	}
+
+	public static Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 positionIndex){
+		return ReferenceCoordenates(localCoordenates, positionIndex);
+	}
+
+	public static Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 positionIndex) { 
+		return ReferenceCoordenates(globalCoordenates, -positionIndex);
 	}
 
 	public static Vector2[] RotateMatrixAngle(Vector2[] vector, int angle)
 	{
-		//Only by 90 degrees and max 3 times
+		//changes angle in degrees by times to rotate 90 degrees
+		int times;
 		if (angle < 0)
-		{
-			angle = 4 - (angle % 360) / 90;
-		}
+			times = 4 - (angle % 360) / 90;
 		else
-		{
-			angle = -(angle % 360) / 90;
-		}
+			times = -(angle % 360) / 90;
 
-		if (angle == 4)
+		//Rotate 4 times 90 degrees is not rotating at all
+		if (times == 4)
 			return vector;
 
-		return RotateMatrixTimes(vector, angle);
+		return RotateMatrixTimes(vector, times);
 	}
 	
 	public static Vector2[] RotateMatrixTimes(Vector2[] vector, int times) {
@@ -70,16 +72,12 @@ public static class MapBuilderCalculations : object
 
 				//A reference to mirror the Y axis
 				if (vectorOut[i].x > xMax)
-				{
 					xMax = vectorOut[i].x;
-				}
 			}
 
 			//Mirror on Y axis
 			for (int i = 0; i < vectorOut.Length; i++)
-			{
 				vectorOut[i].x = xMax - vectorOut[i].x;
-			}
 
 		}
 
