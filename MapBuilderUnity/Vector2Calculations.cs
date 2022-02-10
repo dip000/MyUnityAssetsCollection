@@ -92,5 +92,18 @@ public static class Vector2Calculations : object
 		}
 		return vectorized;
 	}
+	
+	public static Vector2 FindMaxBoundsPoint(Vector2[] points){
+		Vector2 maxBoundsPoint = Vector3.zero;
+		for(int i=0; i<points.Length; i++){
+			if( points[i].x > maxBoundsPoint.x ){
+				maxBoundsPoint.x = points[i].x;
+			}
+			if( points[i].y > maxBoundsPoint.y ){
+				maxBoundsPoint.y = points[i].y;
+			}
+		}
+		return maxBoundsPoint;
+	}
 
 }

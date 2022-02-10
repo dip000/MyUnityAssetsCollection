@@ -23,4 +23,11 @@ public class MapBuilderCustomEditor : Editor
 			builder.ResetItems();
 
 	}
+	
+	/*[DrawGizmo(GizmoType.Selected | )]
+	void OnDrawGizmosSelected()
+	{
+		Gizmos.color = Color.red;
+		Gizmos.DrawLine(Vector3.zero, Vector3.up*20);
+	}*/
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 
 public class MapBuilderManager : MonoBehaviour
@@ -26,6 +27,7 @@ public class MapBuilderManager : MonoBehaviour
 			Debug.LogWarning("No Configurations File. Go to: https://dip000.github.io/MapBuilder/MapBuilderForWeb/MapBuilderForWeb.html To make your map");
 			return;
         }
+		
 		//Reset and set
 		try {ResetItems();} catch{} 
         SerializeConfigurations();
@@ -113,12 +115,17 @@ public class MapBuilderManager : MonoBehaviour
 			Vector2 boxCenter = Vector2Calculations.BoundingBoxAverageOfCoordenates(itemShapeRotated);
 			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridUnitSize;
 			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + levelHolder.position;
+			
+			
+			//Vector3 worldSpaceOffseted = worldSpacePosition + (item.graphics.transform.position - itemOffsets[itemType]);
 
 			//Apply transforms and properties
 			//NOTE: Damn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
 			GameObject itemInstance = Instantiate(item.graphics, worldSpacePosition, Quaternion.Euler(0, 360 - maps.itemRotations[i], 0) );
 			itemInstance.name = item.itemName;
 			itemInstance.transform.parent = levelHolder;
+
+			
 
 			//Save as a reference
 			itemInstances[i] = itemInstance;
@@ -177,50 +184,90 @@ public class MapBuilderManager : MonoBehaviour
 
 /////////////////////// DEBUGS /////////////////////////////////////////////////////
     void Debuger(string text) { if (showDebugs) Debug.Log(text); }
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
-		if (showDebugs)
-		{
-			//Grid origin
-			Vector3 gridOrigin;
-			if (levelHolder == null)
-				gridOrigin = transform.position;
-			else
-				gridOrigin = levelHolder.position;
+		if (showDebugs == false) return;
+		
+		//Grid origin
+		Vector3 gridOrigin;
+		if (levelHolder == null)
+			gridOrigin = transform.position;
+		else
+			gridOrigin = levelHolder.position;
 
-			//Grid Size
-			int itemsX;
-			int itemsY;
-			if (maps == null)
-				itemsX = itemsY = 10;
-			else{
-				itemsX = (int)maps.mapSizeX;
-				itemsY = (int)maps.mapSizeY;
-			}
-
-			//Constants
-			Gizmos.color = Color.green;
-			Vector3 offset = new Vector3(0.5f, 0, 0.5f) * gridUnitSize;
-
-			//DRAW COLUMNS
-			Vector3 cellIncrement = gridOrigin + Vector3.zero;
-			Vector3 colIncrement = Vector3.forward * gridUnitSize * itemsY;
-			Vector3 rowIncrement = Vector3.right * gridUnitSize;
-			for (int i = 0; i < itemsX+1; i++)
-			{
-				Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
-				cellIncrement += rowIncrement;
-			}
-
-			//DRAW ROWS 
-			cellIncrement = gridOrigin + Vector3.zero;
-			colIncrement = Vector3.right * gridUnitSize * itemsX;
-			rowIncrement = Vector3.forward * gridUnitSize;
-			for (int i = 0; i < itemsY+1; i++)
-			{
-				Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
-				cellIncrement += rowIncrement;
-			}
+		//Grid Size
+		int itemsX;
+		int itemsY;
+		if (maps == null)
+			itemsX = itemsY = 10;
+		else{
+			itemsX = (int)maps.mapSizeX;
+			itemsY = (int)maps.mapSizeY;
 		}
+
+		//Constants
+		Gizmos.color = Color.green;
+		Vector3 offset = new Vector3(0.5f, 0, 0.5f) * gridUnitSize;
+
+		//DRAW COLUMNS
+		Vector3 cellIncrement = gridOrigin + Vector3.zero;
+		Vector3 colIncrement = Vector3.forward * gridUnitSize * itemsY;
+		Vector3 rowIncrement = Vector3.right * gridUnitSize;
+		for (int i = 0; i < itemsX+1; i++)
+		{
+			Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
+			cellIncrement += rowIncrement;
+		}
+
+		//DRAW ROWS 
+		cellIncrement = gridOrigin + Vector3.zero;
+		colIncrement = Vector3.right * gridUnitSize * itemsX;
+		rowIncrement = Vector3.forward * gridUnitSize;
+		for (int i = 0; i < itemsY+1; i++)
+		{
+			Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
+			cellIncrement += rowIncrement;
+		}
+		
+		
+		//TESTS	
+		/*for(int i=0; i<items.Length; i++){
+			var item = items[i];
+			Gizmos.DrawCube(itemOffsets[i], new Vector3(itemScales[i].x, 0, itemScales[i].y));
+		}*/
 	}
+	
+	/*void OnSceneGUI(){
+		var item = items[0].graphics.transform;
+		Handles.color = Color.green;
+		Handles.Label( item.position, "Place on top" );
+		
+	}*/
+	
+////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////// TESTS /////////////////////////////////////////////////////
+
+	/*public List<Vector3> itemOffsets = new List<Vector3>();
+	public List<Vector2> itemScales = new List<Vector2>();
+	GameObject graphicsContainer;
+
+	[ContextMenu("Dimentions Helper")]
+	void DimentionsHelper(){
+		itemOffsets.Clear();
+		itemScales.Clear();
+		
+		for(int i=0; i<items.Length; i++){
+			var item = items[i];
+			var shape = Vector2Calculations.VectorizeComponents( item.localCoordenatesX, item.localCoordenatesY );
+			var boundsSize = Vector2Calculations.FindMaxBoundsPoint( shape ) + Vector2.one;
+			
+			itemOffsets.Add( item.graphics.transform.position );
+			itemScales.Add( boundsSize );
+		}
+	}*/
+
+
 }
+
+
