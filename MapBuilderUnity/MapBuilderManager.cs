@@ -9,19 +9,23 @@ public class MapBuilderManager : MonoBehaviour
 {
 	[Header("Select Graphics for each item")]
 	public Items[] items = new Items[0];
-	public Maps maps;
+	[Header( "Select Map Holder for each map" )]
+	public Maps[] maps;
 
 	[Header("Settings")]
 	public TextAsset configurationsFile;
     [HideInInspector] public TextAsset previousConfigurationsFile;
 
-	public Transform levelHolder;
+	public GameObject containerGraphics;
 	public float gridScale = 1;
 
 	[Header("Check to Set Up Graphics")]
 	public bool showDebugs = true;
 
-/////////////////////////// MANAGING //////////////////////////////////////////
+	ArrayHolderRegister arrayHolderComponent;
+	public int currentMapIndex = 0;
+
+	/////////////////////////// MANAGING //////////////////////////////////////////
 	[ContextMenu("MakeLevel")]
     public void MakeLevel()
     {
@@ -29,29 +33,42 @@ public class MapBuilderManager : MonoBehaviour
 			Debug.LogWarning("No Configurations File. Go to: https://dip000.github.io/MapBuilder/MapBuilderForWeb/MapBuilderForWeb.html To make your map");
 			return;
         }
-		
+		if( maps == null ){
+			Debug.LogWarning("No Map to build. Go to: https://dip000.github.io/MapBuilder/MapBuilderForWeb/MapBuilderForWeb.html To make your map");
+			return;
+        }
+
+		currentMapIndex = Mathf.Clamp( currentMapIndex, 0, Mathf.Max( 0, maps.Length - 1 ) );
+
 		//Reset and set
-		try {ResetItems();} catch{} 
+		//try { ResetItems();} catch{} 
         SerializeConfigurations();
-		PlaceHolders();
+		PlaceContainers();
         PlaceItems();
     }
 
 	void SerializeConfigurations()
     {
-        //Configuration file syntax is {mapInfo}${item1Info}&{item2Info}&{...}
-        string[] parsedFiles = configurationsFile.text.Split('$');
-        string mapInfo = parsedFiles[0];
+		//Configuration file syntax is {map1Info}&{mapXInfo}${item1Info}&{itemXInfo}
+		string[] parsedFiles = configurationsFile.text.Split('$');
+        string[] mapInfo = parsedFiles[0].Split('&');
         string[] itemInfo = parsedFiles[1].Split('&');
 		int numberOfItems = itemInfo.Length;
+		int numberOfMaps = mapInfo.Length;
 
-        //Serialize Map info
-        maps = new Maps();
-        maps = Maps.CreateFromJSON(mapInfo);
+		//Serialize Map info
+		Maps[] tempMaps = new Maps[numberOfMaps];
+		for( int i = 0; i < numberOfMaps; i++ ) { 
+			tempMaps[i] = Maps.CreateFromJSON( mapInfo[i] );
 
-        //Serialize Items info:
-        // 1. Creates in a temporal instance to serialize and place user graphics
-        Items[] tempItems = new Items[numberOfItems];
+			if( i < maps.Length )
+				tempMaps[i].mapHolder = maps[i].mapHolder;
+		}
+		maps = tempMaps;
+
+		//Serialize Items info:
+		// 1. Creates in a temporal instance to serialize and place user graphics
+		Items[] tempItems = new Items[numberOfItems];
         for (int i = 0; i < numberOfItems; i++)
         {
             tempItems[i] = Items.CreateFromJSON( itemInfo[i] );
@@ -83,21 +100,20 @@ public class MapBuilderManager : MonoBehaviour
 
 ////////////////////////////////////////// ITEMS PLACER ////////////////////////////
 	GameObject[] itemInstances;
+	GameObject[,] holderInstances;
 
 	public void PlaceItems(){
 
-		//Use a place holder if there's no levelHolder
+		Maps currentMap = maps[currentMapIndex];
+		Transform mapHolder = currentMap.mapHolder;
+
+		//Use a place holder if there's no mapHolder
 		List<GameObject> placeHolders = new List<GameObject>();
-		if (levelHolder == null){
-			levelHolder = (new GameObject("levelHolderPlaceHolder")).transform;
-			levelHolder.parent = transform;
-			levelHolder.position = transform.position;
-		}
 
-		itemInstances = new GameObject[ maps.itemTypes.Length ];
+		itemInstances = new GameObject[ currentMap.itemTypes.Length ];
 
-		for (int i=0; i<maps.itemTypes.Length; i++){
-			var itemType = maps.itemTypes[i];
+		for (int i=0; i<currentMap.itemTypes.Length; i++){
+			var itemType = currentMap.itemTypes[i];
 			var item = items[ itemType ];
 
 			//Use a place holder if there are no graphics
@@ -108,29 +124,38 @@ public class MapBuilderManager : MonoBehaviour
 			}
 
 			Vector2[] itemShape = Vector2Calculations.VectorizeComponents(item.localCoordenatesX, item.localCoordenatesY);
-			Vector2 itemPosition = new Vector2(maps.positionsX[i], maps.positionsY[i]);
+			Vector2 itemPosition = new Vector2(currentMap.positionsX[i], currentMap.positionsY[i]);
 			
 			//Rotate and Globalize coordenates
-			Vector2[] itemShapeRotated = Vector2Calculations.RotateMatrixAngle(itemShape, maps.itemRotations[i]);
+			Vector2[] itemShapeRotated = Vector2Calculations.RotateMatrixAngle(itemShape, currentMap.itemRotations[i]);
 			Vector2[] globalCoordenates = Vector2Calculations.Globalize(itemShapeRotated, itemPosition);
 
 			//Find world space position to place the item
 			Vector2 boxCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( itemShapeRotated);
 			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridScale;
-			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + levelHolder.position;
+			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + mapHolder.position;
 
 			//Apply transforms and properties
 			//NOTE: Damn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
-			GameObject itemInstance = Instantiate(item.graphics, worldSpacePosition, Quaternion.Euler(0, 360 - maps.itemRotations[i], 0) );
+			GameObject itemInstance = Instantiate(item.graphics, worldSpacePosition, Quaternion.Euler(0, 360 - currentMap.itemRotations[i], 0) );
 			itemInstance.name = item.itemName;
-			itemInstance.transform.parent = levelHolder;
+			itemInstance.transform.parent = mapHolder;
+
+			//Add a Pickupable component if it didn't have one
+			if( itemInstance.TryGetComponent( out Pickupable itemComponent ) == false )
+				itemComponent = itemInstance.AddComponent<Pickupable>();
+
+			arrayHolderComponent.UpdateCoordenatesInOccupancyMap( globalCoordenates, PickUpMechanics.occupied );
+
+			//itemComponent.SetOccupancy( holderInstances[] );
+			itemComponent.myName = item.itemName;
+			itemComponent.SetShape( itemShape );
 
 			//Save as a reference
 			itemInstances[i] = itemInstance;
-			//Debuger("Placed " + item.itemName + " in position " + itemPosition + " and rotation " + maps.itemRotations[i]);
 		}
 
-		//Delete used PlaceHolders
+		//Delete used PlaceContainers
 		foreach(var placeHolder in placeHolders)
 			DestroyImmediate(placeHolder);
 
@@ -152,23 +177,52 @@ public class MapBuilderManager : MonoBehaviour
 
 
 	
-	GameObject[,] holderInstances;
-	void PlaceHolders(){
-		holderInstances = new GameObject[(int)maps.mapSizeX, (int)maps.mapSizeY];
-		for (int i=0; i<maps.mapSizeX; i++){
-			for (int j=0; j<maps.mapSizeY; j++){
-				var holder = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				holder.name = "Holder "+i+", "+j;
-				holder.AddComponent<Container>();
-				holder.transform.position = (new Vector3(i, 0, j)) * gridScale + levelHolder.position;
-				holder.transform.parent = levelHolder;
-				
-				var containerComponent = holder.GetComponent<Container>();
-				containerComponent.coordenates = new Vector2(i, j);
-				
-				holderInstances[i, j] = holder;
+	void PlaceContainers(){
+		var currentMap = maps[currentMapIndex];
+		var mapHolder = currentMap.mapHolder;
+
+		if( mapHolder == null ){
+			mapHolder = (new GameObject( "mapHolder"+currentMapIndex )).transform;
+			mapHolder.parent = transform;
+			mapHolder.position = transform.position;
+			currentMap.mapHolder = mapHolder;
+		}
+
+		holderInstances = new GameObject[(int)currentMap.mapSizeX, (int)currentMap.mapSizeY];
+		var holder = containerGraphics;
+		var usedPlaceHolders = false;
+
+		if( holder == null ){
+			holder = GameObject.CreatePrimitive( PrimitiveType.Cube );
+			usedPlaceHolders = true;
+		}
+
+		//Add a ArrayHolderRegister component if it didn't have one
+		if( mapHolder.TryGetComponent( out arrayHolderComponent ) == false )
+			arrayHolderComponent = mapHolder.gameObject.AddComponent<ArrayHolderRegister>();
+
+		arrayHolderComponent.Setup( new Vector2( currentMap.mapSizeX, currentMap.mapSizeY ) );
+
+		for( int i=0; i< currentMap.mapSizeX; i++){
+			for (int j=0; j< currentMap.mapSizeY; j++){
+
+				var instance = Instantiate( holder );
+				instance.name = "Holder "+i+", "+j;
+
+				instance.transform.position = (new Vector3(i, 0, j)) * gridScale + mapHolder.position;
+				instance.transform.parent = mapHolder;
+
+				//Add a Container component if it didn't have one
+				if( instance.TryGetComponent( out Container containerComponent ) == false)
+					containerComponent = instance.AddComponent<Container>();
+
+				containerComponent.coordenates = new Vector2( i, j );
+				holderInstances[i, j] = instance;
 			}
 		}
+
+		if( usedPlaceHolders )
+			DestroyImmediate( holder );
 	}
 	
 	void ResetHolders(){
@@ -182,7 +236,7 @@ public class MapBuilderManager : MonoBehaviour
 		}
 
 		itemInstances = null;
-		Debuger("Deleted items in scene");
+		Debuger("Deleted Containers in scene");
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -202,13 +256,15 @@ public class MapBuilderManager : MonoBehaviour
 		}
 	}
 
+	[System.Serializable]
 	public class Maps
 	{
-		public string mapName;
-		public float mapSizeX, mapSizeY;
-		public int[] itemTypes;
-		public int[] itemRotations;
-		public float[] positionsX, positionsY;
+		[HideInInspector] public string mapName;
+		public Transform mapHolder;
+		[HideInInspector] public float mapSizeX, mapSizeY;
+		[HideInInspector] public int[] itemTypes;
+		[HideInInspector] public int[] itemRotations;
+		[HideInInspector] public float[] positionsX, positionsY;
 
 		public static Maps CreateFromJSON(string jsonString){
 			return JsonUtility.FromJson<Maps>(jsonString);
@@ -221,24 +277,36 @@ public class MapBuilderManager : MonoBehaviour
     void Debuger(string text) { if (showDebugs) Debug.Log(text); }
 	void OnDrawGizmos()
 	{
-		if (showDebugs == false) return;
-		
-		//Grid origin
-		Vector3 gridOrigin;
-		if (levelHolder == null)
-			gridOrigin = transform.position;
-		else
-			gridOrigin = levelHolder.position;
+		if( showDebugs == false ) return;
 
-		//Grid Size
+		//Grid origin at current map index. If there's no holder, use this builder's position
+		Transform mapHolder;
+		Vector3 gridOrigin;
 		int itemsX;
 		int itemsY;
-		if (maps == null)
+
+		if( maps == null ){
+			mapHolder = transform;
 			itemsX = itemsY = 10;
-		else{
-			itemsX = (int)maps.mapSizeX;
-			itemsY = (int)maps.mapSizeY;
 		}
+		else if( maps.Length <= 0){
+			mapHolder = transform;
+			itemsX = itemsY = 10;
+		}
+		else{
+			currentMapIndex = Mathf.Clamp(currentMapIndex, 0, maps.Length-1 );
+			var currentMap = maps[currentMapIndex];
+			if( currentMap.mapHolder == null )
+				mapHolder = transform;
+			else
+				mapHolder = currentMap.mapHolder;
+			
+			itemsX = (int)maps[currentMapIndex].mapSizeX;
+			itemsY = (int)maps[currentMapIndex].mapSizeY;
+		}
+
+		gridOrigin = mapHolder.position;
+
 
 		//Constants
 		Gizmos.color = Color.green;
@@ -268,10 +336,11 @@ public class MapBuilderManager : MonoBehaviour
 
 	}
 
+	void ArrayDebuger( Vector2[] vectorArray, string text = "ArrayDebuger" ) { if( showDebugs ) for( int i = 0; i < vectorArray.Length; i++ ) Debug.Log( text + " [" + i + "] " + vectorArray[i] ); }
 
-////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
 
-/////////////////////// TESTS /////////////////////////////////////////////////////
+	/////////////////////// TESTS /////////////////////////////////////////////////////
 
 
 

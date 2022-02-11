@@ -243,11 +243,10 @@ public class DoorOpener : MonoBehaviour
 	//-------------------- UTILITIES ----------------------------------------------
 	Vector3 GetPointOverHandleCollider()
 	{
-		//Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
-		RaycastHit hit;
+        //Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
 
-		ray = cam.ScreenPointToRay(Input.mousePosition);
-		handle.GetComponent<Collider>().Raycast(ray, out hit, 100);
+        ray = cam.ScreenPointToRay( Input.mousePosition );
+        handle.GetComponent<Collider>().Raycast(ray, out RaycastHit hit, 100);
 		return hit.point;
 	}
 
@@ -269,13 +268,11 @@ public class DoorOpener : MonoBehaviour
 	Vector3 GetMousePositionOverSlideSurface(){
 		//Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
 		ray = cam.ScreenPointToRay(Input.mousePosition);
-		RaycastHit hit;
-		Vector3 point;
+        Vector3 point;
 
-		if(sphere.transform.GetComponent<MeshCollider>().Raycast(ray, out hit, 100) == false){
-			float enter;
-			slideSurface.Raycast(ray, out enter);
-			point = ray.GetPoint(enter);
+        if(sphere.transform.GetComponent<MeshCollider>().Raycast(ray, out RaycastHit hit, 100) == false){
+            slideSurface.Raycast( ray, out float enter );
+            point = ray.GetPoint(enter);
 		}
 		else{
 			point = hit.point;

@@ -42,9 +42,11 @@ public static class Vector2Calculations : object
     {
 		Vector2[] referenced= new Vector2[coordenates.Length];
 
-		for (int i = 0; i < coordenates.Length; i++)
+		for( int i = 0; i < coordenates.Length; i++ ){
 			referenced[i] = coordenates[i] + reference;
-		return coordenates;
+		}
+
+		return referenced;
 	}
 
 	public static Vector2[] Globalize(Vector2[] localCoordenates, Vector2 positionIndex){

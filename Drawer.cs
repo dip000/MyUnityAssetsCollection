@@ -169,11 +169,10 @@ public class Drawer : MonoBehaviour
 	}
 	
 	Vector3 GetMousePositionOverSlideSurface(){
-		//Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
-		float enter = 0;
+        //Update mouse position, casts a ray onto imaginary Plane, and returns the hit point
 
-		ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-		slideSurface.Raycast(ray, out enter);
+        ray = Camera.main.ScreenPointToRay( Input.mousePosition );
+        slideSurface.Raycast(ray, out float enter );
 		return ray.GetPoint(enter);
 	}
 	
