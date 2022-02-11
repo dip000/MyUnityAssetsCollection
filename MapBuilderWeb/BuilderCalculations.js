@@ -164,7 +164,7 @@
 		}
 		
 		function randomColor(){
-			return 'rgb('+random(200)+','+(random(100)+155)+','+random(200)+')';    
+			return 'rgb('+random(200)+','+(random(155)+100)+','+random(200)+')';    
 		}
 		function random(number){
 			return Math.floor(Math.random()*number);;

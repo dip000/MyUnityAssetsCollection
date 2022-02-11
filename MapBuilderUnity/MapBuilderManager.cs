@@ -2,23 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Linq;
 
 
 public class MapBuilderManager : MonoBehaviour
 {
 	[Header("Select Graphics for each item")]
-	public Items[] items;
+	public Items[] items = new Items[0];
 	public Maps maps;
 
-	[Header("Setup")]
+	[Header("Settings")]
 	public TextAsset configurationsFile;
     [HideInInspector] public TextAsset previousConfigurationsFile;
 
 	public Transform levelHolder;
-	public float gridUnitSize = 1;
+	public float gridScale = 1;
 
-	[Header("Check to see the grid")]
-	public bool showDebugs;
+	[Header("Check to Set Up Graphics")]
+	public bool showDebugs = true;
 
 /////////////////////////// MANAGING //////////////////////////////////////////
     public void MakeLevel()
@@ -62,11 +63,48 @@ public class MapBuilderManager : MonoBehaviour
 		items = tempItems;
     }
 
-    private void OnValidate()
+	Dictionary<string, DebugPropertiesForItems> currentGraphics = new Dictionary<string, DebugPropertiesForItems>();
+	void UpdateChangedGraphics()
     {
-        //If user inputed a configurations file. Serialize configurations so user can
-        //place the graphics in its corresponding items
-        if (configurationsFile == previousConfigurationsFile) return;
+		//TEST ON GRAPHICS CHANGE
+		for( int i = 0; i < items.Length; i++ )
+		{
+			var item = items[i];
+			if( item == null )
+				break;
+
+			var itemName = item.itemName;
+
+			if( items[i].graphics == null )
+				currentGraphics.Remove( itemName );
+
+			else{
+				if( currentGraphics.ContainsKey( itemName ) == false )
+				{
+					Debuger( "1. Scale the platform so it matches with the object size");
+					Debuger( "2. Move the item so it sits over the platform" );
+
+					//Register and save Debug properties
+					DebugPropertiesForItems properties = new DebugPropertiesForItems();
+					properties.initialPosition = item.graphics.transform.position;
+					properties.itemInstance = item;
+					properties.shape = Vector2Calculations.VectorizeComponents( item.localCoordenatesX, item.localCoordenatesY );
+					properties.shapeCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( properties.shape );
+					
+					currentGraphics[itemName] = properties;
+					break;
+				}
+			}
+		}
+	}
+
+	private void OnValidate()
+    {
+		UpdateChangedGraphics();
+
+		//If user inputed a configurations file. Serialize configurations so user can
+		//place the graphics in its corresponding items
+		if (configurationsFile == previousConfigurationsFile) return;
         previousConfigurationsFile = configurationsFile;
 
         if (configurationsFile == null) return;
@@ -74,7 +112,7 @@ public class MapBuilderManager : MonoBehaviour
 
         SerializeConfigurations();
         Debuger("Serialized configurations");
-    }
+	}
 	
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -100,7 +138,7 @@ public class MapBuilderManager : MonoBehaviour
 			//Use a place holder if there are no graphics
 			if (item.graphics == null) { 
 				item.graphics = GameObject.CreatePrimitive(PrimitiveType.Cube);
-				item.graphics.transform.localScale = Vector3.one * gridUnitSize;
+				item.graphics.transform.localScale = Vector3.one * gridScale;
 				placeHolders.Add(item.graphics);
 			}
 
@@ -112,24 +150,23 @@ public class MapBuilderManager : MonoBehaviour
 			Vector2[] globalCoordenates = Vector2Calculations.GlobalizeCoordenates(itemShapeRotated, itemPosition);
 
 			//Find world space position to place the item
-			Vector2 boxCenter = Vector2Calculations.BoundingBoxAverageOfCoordenates(itemShapeRotated);
-			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridUnitSize;
+			Vector2 boxCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( itemShapeRotated);
+			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridScale;
 			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + levelHolder.position;
-			
-			
-			//Vector3 worldSpaceOffseted = worldSpacePosition + (item.graphics.transform.position - itemOffsets[itemType]);
 
+			//Offset it if an offset was registered
+			if( currentGraphics.ContainsKey( item.itemName ) )
+				worldSpacePosition += currentGraphics[item.itemName].offsetPosition;
+			
 			//Apply transforms and properties
 			//NOTE: Damn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
 			GameObject itemInstance = Instantiate(item.graphics, worldSpacePosition, Quaternion.Euler(0, 360 - maps.itemRotations[i], 0) );
 			itemInstance.name = item.itemName;
 			itemInstance.transform.parent = levelHolder;
 
-			
-
 			//Save as a reference
 			itemInstances[i] = itemInstance;
-			Debuger("Placed " + item.itemName + " in position " + itemPosition + " and rotation " + maps.itemRotations[i]);
+			//Debuger("Placed " + item.itemName + " in position " + itemPosition + " and rotation " + maps.itemRotations[i]);
 		}
 
 		//Delete used PlaceHolders
@@ -153,6 +190,15 @@ public class MapBuilderManager : MonoBehaviour
 	////////////////////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////// CLASSES /////////////////////////////////
+
+	public class DebugPropertiesForItems {
+		public Items itemInstance;
+		public Vector3 initialPosition;
+		public Vector3 offsetPosition;
+		public Vector2 shapeCenter;
+		public Vector2[] shape;
+    }
+
 
 	[System.Serializable]
 	public class Items {
@@ -207,12 +253,12 @@ public class MapBuilderManager : MonoBehaviour
 
 		//Constants
 		Gizmos.color = Color.green;
-		Vector3 offset = new Vector3(0.5f, 0, 0.5f) * gridUnitSize;
+		Vector3 offset = new Vector3(0.5f, 0, 0.5f) * gridScale;
 
 		//DRAW COLUMNS
 		Vector3 cellIncrement = gridOrigin + Vector3.zero;
-		Vector3 colIncrement = Vector3.forward * gridUnitSize * itemsY;
-		Vector3 rowIncrement = Vector3.right * gridUnitSize;
+		Vector3 colIncrement = Vector3.forward * gridScale * itemsY;
+		Vector3 rowIncrement = Vector3.right * gridScale;
 		for (int i = 0; i < itemsX+1; i++)
 		{
 			Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
@@ -221,51 +267,51 @@ public class MapBuilderManager : MonoBehaviour
 
 		//DRAW ROWS 
 		cellIncrement = gridOrigin + Vector3.zero;
-		colIncrement = Vector3.right * gridUnitSize * itemsX;
-		rowIncrement = Vector3.forward * gridUnitSize;
+		colIncrement = Vector3.right * gridScale * itemsX;
+		rowIncrement = Vector3.forward * gridScale;
 		for (int i = 0; i < itemsY+1; i++)
 		{
 			Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
 			cellIncrement += rowIncrement;
 		}
-		
-		
-		//TESTS	
-		/*for(int i=0; i<items.Length; i++){
-			var item = items[i];
-			Gizmos.DrawCube(itemOffsets[i], new Vector3(itemScales[i].x, 0, itemScales[i].y));
-		}*/
+
+		//DRAW DIMENTIONS HELPER
+		foreach( var currentGraphic in currentGraphics ) {
+
+			var properties = currentGraphic.Value;
+
+			var item = properties.itemInstance;
+			var initialPosition = properties.initialPosition;
+			var shape = properties.shape;
+			var shapeCenter = properties.shapeCenter;
+
+			//Skip items saved in project files
+			if( item?.graphics == null )
+				continue;
+
+			properties.offsetPosition = item.graphics.transform.position - initialPosition;
+
+			var itemScale = new Vector3( gridScale, 0.1f, gridScale );
+
+			for( int j = 0; j < item.localCoordenatesX.Length; j++ )
+			{
+				// 1. We're printing cell by cell the object shape made of 'shape.Length' squares
+				// 2. shapeCenter is the bounding box center of all the squares that compose the whole shape
+				var previousCenter = shape[j];
+				var newCenter = (previousCenter - shapeCenter) * gridScale;
+				var newCenterGlobalized = new Vector3( newCenter.x, 0, newCenter.y ) + initialPosition;
+
+				Gizmos.DrawCube( newCenterGlobalized, itemScale );
+			}
+		}
+
 	}
-	
-	/*void OnSceneGUI(){
-		var item = items[0].graphics.transform;
-		Handles.color = Color.green;
-		Handles.Label( item.position, "Place on top" );
-		
-	}*/
-	
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////// TESTS /////////////////////////////////////////////////////
 
-	/*public List<Vector3> itemOffsets = new List<Vector3>();
-	public List<Vector2> itemScales = new List<Vector2>();
-	GameObject graphicsContainer;
-
-	[ContextMenu("Dimentions Helper")]
-	void DimentionsHelper(){
-		itemOffsets.Clear();
-		itemScales.Clear();
-		
-		for(int i=0; i<items.Length; i++){
-			var item = items[i];
-			var shape = Vector2Calculations.VectorizeComponents( item.localCoordenatesX, item.localCoordenatesY );
-			var boundsSize = Vector2Calculations.FindMaxBoundsPoint( shape ) + Vector2.one;
-			
-			itemOffsets.Add( item.graphics.transform.position );
-			itemScales.Add( boundsSize );
-		}
-	}*/
 
 
 }

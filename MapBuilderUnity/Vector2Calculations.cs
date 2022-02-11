@@ -4,22 +4,23 @@ using UnityEngine;
 
 public static class Vector2Calculations : object
 {
-	public static Vector2 BoundingBoxAverageOfCoordenates(Vector2[] coordenates)
+	public static Vector2 BoundingBoxCenterOfCoordenates(Vector2[] coordenates)
 	{
-		Vector2 averageOfLocalCoordenates = Vector2.zero;
-
-		for (int i = 0; i < coordenates.Length; i++)
-		{
-			if (coordenates[i].x > averageOfLocalCoordenates.x)
-				averageOfLocalCoordenates.x = coordenates[i].x;
-
-			if (coordenates[i].y > averageOfLocalCoordenates.y)
-				averageOfLocalCoordenates.y = coordenates[i].y;
-		}
-
 		//The middle of the farthest point in X,Y is the bounding box center
-		averageOfLocalCoordenates *= 0.5f;
-		return averageOfLocalCoordenates;
+		return ( BoundsOfCoordenates( coordenates ) * 0.5f );
+	}
+	public static Vector2 BoundsOfCoordenates( Vector2[] points )
+	{
+		Vector2 maxBoundsPoint = Vector3.zero;
+		for( int i = 0; i < points.Length; i++ )
+		{
+			if( points[i].x > maxBoundsPoint.x )
+				maxBoundsPoint.x = points[i].x;
+
+			if( points[i].y > maxBoundsPoint.y )
+				maxBoundsPoint.y = points[i].y;
+		}
+		return maxBoundsPoint;
 	}
 
 	static Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 reference)
@@ -93,17 +94,7 @@ public static class Vector2Calculations : object
 		return vectorized;
 	}
 	
-	public static Vector2 FindMaxBoundsPoint(Vector2[] points){
-		Vector2 maxBoundsPoint = Vector3.zero;
-		for(int i=0; i<points.Length; i++){
-			if( points[i].x > maxBoundsPoint.x ){
-				maxBoundsPoint.x = points[i].x;
-			}
-			if( points[i].y > maxBoundsPoint.y ){
-				maxBoundsPoint.y = points[i].y;
-			}
-		}
-		return maxBoundsPoint;
-	}
+
+
 
 }
