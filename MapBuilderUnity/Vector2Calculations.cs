@@ -4,6 +4,21 @@ using UnityEngine;
 
 public static class Vector2Calculations : object
 {
+	public static Vector2 RoundVector(Vector2 vector){
+		float x = (float)System.Math.Round(vector.x);
+		float y = (float)System.Math.Round(vector.y);
+		return new Vector2( x, y );
+	}
+	
+	public static Vector2 VolumeCenter(Vector2[] coordenates){
+		Vector2 volumeCenter = Vector3.zero;
+		for( int i = 0; i < coordenates.Length; i++ )
+		{
+			volumeCenter += coordenates[i];
+		}
+		return volumeCenter / coordenates.Length;
+	}
+	
 	public static Vector2 BoundingBoxCenterOfCoordenates(Vector2[] coordenates)
 	{
 		//The middle of the farthest point in X,Y is the bounding box center
@@ -32,11 +47,11 @@ public static class Vector2Calculations : object
 		return coordenates;
 	}
 
-	public static Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 positionIndex){
+	public static Vector2[] Globalize(Vector2[] localCoordenates, Vector2 positionIndex){
 		return ReferenceCoordenates(localCoordenates, positionIndex);
 	}
 
-	public static Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 positionIndex) { 
+	public static Vector2[] Localize(Vector2[] globalCoordenates, Vector2 positionIndex) { 
 		return ReferenceCoordenates(globalCoordenates, -positionIndex);
 	}
 

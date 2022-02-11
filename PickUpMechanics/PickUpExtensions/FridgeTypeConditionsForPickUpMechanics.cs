@@ -11,7 +11,6 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 	ArrayHolderRegister arrayHolderRegister;
 	Pickupable item;
 	Container container;
-	bool[,] map;
 
 	
 	void Awake(){
@@ -27,7 +26,7 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 	bool EvaluatePickUpCondition(){
 		UpdateLookUpVariables();
 
-		Vector2[] coordenatesOfItem = item.coordenates;
+		Vector2[] coordenatesOfItem = item.shape;
 
 		// If item have at least one part in frontal row, pick up inconditionally
 		for (int i=0; i< coordenatesOfItem.Length; i++){
@@ -42,7 +41,7 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 		{
 			int x = (int)coordenatesOfItem[i].x;
 			int y = (int)coordenatesOfItem[i].y - 1;
-			if (map[x, y] == PickUpMechanics.free)
+			if (arrayHolderRegister.occupancyMap[x, y] == PickUpMechanics.free)
 			{
 				Debuger("Pick up condition (Custom Fridge-Type) of have free a slot in frnt row was a success");
 				return true;
@@ -57,8 +56,8 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 	bool EvaluateDropCondition(){
 		UpdateLookUpVariables();
 
-		arrayHolderRegister.UpdateDropPlacement();
-		Vector2[] coordenatesOfItem = arrayHolderRegister.globalCoordenates;
+		//arrayHolderRegister.UpdateDropPlacement();
+		Vector2[] coordenatesOfItem = new Vector2[0];
 
 		for (int i = 0; i < coordenatesOfItem.Length; i++)
 		{
@@ -74,7 +73,7 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 			}
 
 			//If it is at the back, it must have at least one free slot in front
-			else if(map[x, y-1] == PickUpMechanics.free)
+			else if(arrayHolderRegister.occupancyMap[x, y-1] == PickUpMechanics.free)
 			{
 				Debuger("Pick up condition (Custom Fridge-Type) of having a free slot in front row was a success");
 				return true;
@@ -90,7 +89,7 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 	void UpdateLookUpVariables(){
 		item = PickUpMechanics.targetPickupable;
 		container = PickUpMechanics.targetContainer;
-		map = ArrayHolderRegister.occupancyMap;
+		//map = ArrayHolderRegister.occupancyMap;
 	}
 	
 	

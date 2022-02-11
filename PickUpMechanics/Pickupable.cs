@@ -6,13 +6,7 @@ public class Pickupable : MonoBehaviour
 {
 	
     public string myName = "ObjectX";
-
-	//Global coordenates of the current position being occupied
-    public Vector2[] coordenates { get; private set; }
-
-	//Position of this item where it was dropped
-	//ArrayHolderRegister uses the lowest point in X and Y of coordenates variable
-	public Vector2 coordenateIndex { get; private set; }
+    public Vector2[] shape { get; private set; }
     public Container myContainer { get; private set; }
 
 	public void ResetOccupancy(){
@@ -23,14 +17,9 @@ public class Pickupable : MonoBehaviour
 		myContainer = _myContainer;
 	}
 	
-	public void SetCoordenates(Vector2[] _coordenates, Vector2 _coordenateIndex)
+	public void SetShape(Vector2[] _shape)
 	{
-		coordenates = _coordenates;
-		coordenateIndex = _coordenateIndex;
-	}
-	public void SetCoordenates(Vector2[] _coordenates)
-	{
-		coordenates = _coordenates;
+		shape = _shape;
 	}
 
 	public void AcomodateInMyContainer()

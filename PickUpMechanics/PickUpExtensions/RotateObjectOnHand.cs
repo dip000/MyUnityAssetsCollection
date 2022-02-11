@@ -48,7 +48,7 @@ public class RotateObjectOnHand : MonoBehaviour
 	void RotateItem(int rotation)
     {
 		//Rotate and Globalize coordenates
-		arrayHolderRegister.localCoordenates = RotateMatrixTimes(arrayHolderRegister.localCoordenates, rotation);
+		//arrayHolderRegister.localCoordenates = RotateMatrixTimes(arrayHolderRegister.localCoordenates, rotation);
 	}
 
 	Vector2[] RotateMatrixTimes(Vector2[] vector, int times)

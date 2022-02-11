@@ -5,212 +5,51 @@ using System.Linq;
 
 public class ArrayHolderRegister : MonoBehaviour {
 
-	public static Container[,] containers;
-	public static bool[,] occupancyMap;
-	public Vector2[] localCoordenates;
+	public bool[,] occupancyMap;
 	
 	void Awake(){
 		PickUpMechanics.OnPickUp += OnPickUp;
 		PickUpMechanics.OnDrop += OnDrop;
-		
 	}
 
 
-	public void RegisterContainers(Container[,] _containers)
+	public void Setup(Vector2 size)
     {
-		if (_containers.Length <= 0)
-		{
-			Debug.LogWarning("ARRAY HOLDER REGISTER. No containers in scene to manage");
-		}
-
-		containers = _containers;
-	}
-
-	public void SetupContainers(){
-
-		occupancyMap = new bool[containers.GetLength(0), containers.GetLength(1)];
-		UpdateMapFromMyHolders();
-
+		occupancyMap = new bool[(int)size.x, (int)size.y];
 		Debuger("Containers Setted up");
 	}
 
-	void UpdateMapFromMyHolders()
-	{
-		List<Vector2> currentCordenates = new List<Vector2>();
-
-		//Loops through all containers to find objects inside, if find,
-		//its object inside has the coordenates for the rest of its own positions
-		for (int i = 0; i < containers.GetLength(0); i++)
-		{
-			for (int j = 0; j < containers.GetLength(1); j++)
-			{
-				Pickupable itemFound = containers[i, j].objectInside;
-				if (itemFound != null)
-				{
-					currentCordenates.InsertRange(0, itemFound.coordenates);
-				}
-			}
-		}
-
-		Debuger("ArrayHolderRegister found " + currentCordenates.Count + " items placed inside");
-
-		UpdateCoordenatesInOccupancyMap(currentCordenates.ToArray(), PickUpMechanics.occupied);
-	}
-
-
-
-
-	
-
 	//------------------------ LIVE REGISTER -------------------------------------
 	void OnDrop(){
-		UpdateDropPlacement();
-
-		Pickupable item = PickUpMechanics.handObject;
-
-		item.SetCoordenates( globalCoordenates, indexCoordenatesDisplaced);
+		Pickupable item = PickUpMechanics.targetPickupable;
+		Container container = PickUpMechanics.targetContainer;
+		
+		var placementPosition = volumesCenter[item] + container.coordenates;
+		var globalCoordenates = Vector2Calculations.Globalize( item.shape, placementPosition );
+		
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.occupied);
 		
-        item.transform.position = ContainerCoordenatesToWorldSpacePosition(indexCoordenatesDisplaced);
+        item.transform.position = /*ContainerCoordenatesToWorldSpacePosition*/(placementPosition);
         item.transform.parent = null;
 		
 	}
+	
 	void OnPickUp()
 	{
-		Pickupable item = PickUpMechanics.targetPickupable;
-
-		Vector2[] globalCoordenates = item.coordenates;
+		var item = PickUpMechanics.targetPickupable;
+		var container = PickUpMechanics.targetContainer;
+		var globalCoordenates = Vector2Calculations.Globalize(item.shape, container.coordenates);
+		
 		UpdateCoordenatesInOccupancyMap(globalCoordenates, PickUpMechanics.free);
-
-		localCoordenates = LocalizeCoordenates(globalCoordenates, item.coordenateIndex);
-	}
-
-	public Vector2 indexCoordenatesDisplaced;
-	public Vector2[] globalCoordenates;
-	public void UpdateDropPlacement()
-    {
-		Container container = PickUpMechanics.targetContainer;
-
-		Vector2 indexCoordenates = container.coordenates;
-		Vector2 volumeAverage = VolumeAverageOfCoordenates(localCoordenates);
-		Vector2 volumeAverageRounded = RoundVector(volumeAverage);
-		indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
-
-		globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
-		//ArrayDebuger(localCoordenates, "Local coordenates test");
-	}
-
-
-	// ------------------------------ UTILITIES ------------------------------------
-	public Vector2[] GlobalizeCoordenates(Vector2[] localCoordenates, Vector2 referenceCoordenate){
-		Vector2[] globalizedCoordenates = new Vector2[localCoordenates.Length];
-		localCoordenates.CopyTo(globalizedCoordenates, 0);
 		
-		globalizedCoordenates = ReferenceCoordenates(globalizedCoordenates, referenceCoordenate);
-		//ArrayDebuger(globalizedCoordenates, "Globalized coordenates of item in hand");
-		return globalizedCoordenates;
+		//Calculate Volume Center if it is the first of a kind item
+		if( volumesCenter.ContainsKey( item ) == false ){
+			volumesCenter[item] = Vector2Calculations.RoundVector( Vector2Calculations.VolumeCenter(item.shape) );
+		}
 	}
 
-	Vector2[] LocalizeCoordenates(Vector2[] globalCoordenates, Vector2 referenceCoordenate)
-    {
-		ReferenceCoordenates(globalCoordenates, -referenceCoordenate);
-		//ArrayDebuger(globalCoordenates, "Localized coordenates of item in hand");
-		return globalCoordenates;
-	}
 	
-	Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 referenceCoordenate)
-    {
-		Vector2[] localizedCoordenates = new Vector2[coordenates.Length];
-		localizedCoordenates = coordenates;
-
-		for (int i=0; i< coordenates.Length; i++)
-        {
-			localizedCoordenates[i] += referenceCoordenate;
-		}
-
-		return localizedCoordenates;
-	}
-
-	Vector2 VolumeAverageOfCoordenates(Vector2[] coordenates){
-		Vector2 averageOfLocalCoordenates = Vector2.zero;
-		for (int i=0; i< coordenates.Length; i++)
-        {
-			averageOfLocalCoordenates += coordenates[i];
-		}
-		
-		averageOfLocalCoordenates /= coordenates.Length;
-
-		return averageOfLocalCoordenates;
-	}
-
-	Vector2 RoundVector(Vector2 vector)
-    {
-		vector.x = (float)System.Math.Round(vector .x);
-		vector.y = (float)System.Math.Round(vector.y);
-		return vector;
-	}
-
-	Vector2 BoundingBoxAverageOfCoordenates(Vector2[] coordenates){
-
-		Vector2 averageOfLocalCoordenates = Vector2.zero;
-
-		for (int i=0; i< coordenates.Length; i++)
-        {
-
-			if(coordenates[i].x > averageOfLocalCoordenates.x)
-            {
-				averageOfLocalCoordenates.x = coordenates[i].x;
-			}
-			if(coordenates[i].y > averageOfLocalCoordenates.y)
-            {
-				averageOfLocalCoordenates.y = coordenates[i].y;
-			}
-		}
-
-		averageOfLocalCoordenates *= 0.5f;
-
-		return averageOfLocalCoordenates;
-	}
-	
-	Vector3 ContainerCoordenatesToWorldSpacePosition(Vector2 containerCoordenates){
-		Vector3 containerSpacePosition = BoundingBoxAverageOfCoordenates(localCoordenates) + containerCoordenates;
-		containerSpacePosition.z = containerSpacePosition.y;
-		containerSpacePosition.y = 0;
-		Vector3 worldSpacePosition = containerSpacePosition;
-		
-		Debuger("worldSpacePosition placement: " + worldSpacePosition);
-		return worldSpacePosition;
-	}
-
-	public Vector2[] GetGlobalCoordenates()
-    {
-		Container container = PickUpMechanics.targetContainer;
-
-		Vector2 indexCoordenates = container.coordenates;
-		Vector2 volumeAverage = VolumeAverageOfCoordenates(localCoordenates);
-		Vector2 volumeAverageRounded = RoundVector(volumeAverage);
-		Vector2 indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
-
-		Vector2[] globalCoordenates = GlobalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
-		return globalCoordenates;
-	}
-	public Vector2[] GetLocalCoordenates(Vector2[] localCoordenatesReference)
-    {
-		Container container = PickUpMechanics.targetContainer;
-
-		Vector2 indexCoordenates = container.coordenates;
-		Vector2 volumeAverage = VolumeAverageOfCoordenates(localCoordenatesReference);
-		Vector2 volumeAverageRounded = RoundVector(volumeAverage);
-		Vector2 indexCoordenatesDisplaced = indexCoordenates - volumeAverageRounded;
-
-		Vector2[] localizedCoordenates = LocalizeCoordenates(localCoordenates, indexCoordenatesDisplaced);
-		return localizedCoordenates;
-	}
-
-	public void RotateObjectOnHand(int times)
-    {
-
-	}
+	Dictionary<Pickupable, Vector2> volumesCenter = new Dictionary<Pickupable, Vector2>();
 
 	void UpdateCoordenatesInOccupancyMap(Vector2[] coordenates, bool state){
 		

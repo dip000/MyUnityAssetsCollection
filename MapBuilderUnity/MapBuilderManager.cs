@@ -22,6 +22,7 @@ public class MapBuilderManager : MonoBehaviour
 	public bool showDebugs = true;
 
 /////////////////////////// MANAGING //////////////////////////////////////////
+	[ContextMenu("MakeLevel")]
     public void MakeLevel()
     {
 		if(configurationsFile == null){
@@ -32,6 +33,7 @@ public class MapBuilderManager : MonoBehaviour
 		//Reset and set
 		try {ResetItems();} catch{} 
         SerializeConfigurations();
+		PlaceHolders();
         PlaceItems();
     }
 
@@ -63,45 +65,8 @@ public class MapBuilderManager : MonoBehaviour
 		items = tempItems;
     }
 
-	Dictionary<string, DebugPropertiesForItems> currentGraphics = new Dictionary<string, DebugPropertiesForItems>();
-	void UpdateChangedGraphics()
-    {
-		//TEST ON GRAPHICS CHANGE
-		for( int i = 0; i < items.Length; i++ )
-		{
-			var item = items[i];
-			if( item == null )
-				break;
-
-			var itemName = item.itemName;
-
-			if( items[i].graphics == null )
-				currentGraphics.Remove( itemName );
-
-			else{
-				if( currentGraphics.ContainsKey( itemName ) == false )
-				{
-					Debuger( "1. Scale the platform so it matches with the object size");
-					Debuger( "2. Move the item so it sits over the platform" );
-
-					//Register and save Debug properties
-					DebugPropertiesForItems properties = new DebugPropertiesForItems();
-					properties.initialPosition = item.graphics.transform.position;
-					properties.itemInstance = item;
-					properties.shape = Vector2Calculations.VectorizeComponents( item.localCoordenatesX, item.localCoordenatesY );
-					properties.shapeCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( properties.shape );
-					
-					currentGraphics[itemName] = properties;
-					break;
-				}
-			}
-		}
-	}
-
 	private void OnValidate()
     {
-		UpdateChangedGraphics();
-
 		//If user inputed a configurations file. Serialize configurations so user can
 		//place the graphics in its corresponding items
 		if (configurationsFile == previousConfigurationsFile) return;
@@ -147,17 +112,13 @@ public class MapBuilderManager : MonoBehaviour
 			
 			//Rotate and Globalize coordenates
 			Vector2[] itemShapeRotated = Vector2Calculations.RotateMatrixAngle(itemShape, maps.itemRotations[i]);
-			Vector2[] globalCoordenates = Vector2Calculations.GlobalizeCoordenates(itemShapeRotated, itemPosition);
+			Vector2[] globalCoordenates = Vector2Calculations.Globalize(itemShapeRotated, itemPosition);
 
 			//Find world space position to place the item
 			Vector2 boxCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( itemShapeRotated);
 			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridScale;
 			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + levelHolder.position;
 
-			//Offset it if an offset was registered
-			if( currentGraphics.ContainsKey( item.itemName ) )
-				worldSpacePosition += currentGraphics[item.itemName].offsetPosition;
-			
 			//Apply transforms and properties
 			//NOTE: Damn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
 			GameObject itemInstance = Instantiate(item.graphics, worldSpacePosition, Quaternion.Euler(0, 360 - maps.itemRotations[i], 0) );
@@ -175,6 +136,7 @@ public class MapBuilderManager : MonoBehaviour
 
 	}
 	
+	[ContextMenu("ResetItems")]
 	public void ResetItems(){
 		if(itemInstances== null) return;
 		if(itemInstances.Length <= 0) return;
@@ -184,21 +146,48 @@ public class MapBuilderManager : MonoBehaviour
 		}
 
 		itemInstances = null;
+		ResetHolders();
 		Debuger("Deleted items in scene");
 	}
 
-	////////////////////////////////////////////////////////////////////////////////////
 
-	////////////////////////////////////////// CLASSES /////////////////////////////////
+	
+	GameObject[,] holderInstances;
+	void PlaceHolders(){
+		holderInstances = new GameObject[(int)maps.mapSizeX, (int)maps.mapSizeY];
+		for (int i=0; i<maps.mapSizeX; i++){
+			for (int j=0; j<maps.mapSizeY; j++){
+				var holder = GameObject.CreatePrimitive(PrimitiveType.Cube);
+				holder.name = "Holder "+i+", "+j;
+				holder.AddComponent<Container>();
+				holder.transform.position = (new Vector3(i, 0, j)) * gridScale + levelHolder.position;
+				holder.transform.parent = levelHolder;
+				
+				var containerComponent = holder.GetComponent<Container>();
+				containerComponent.coordenates = new Vector2(i, j);
+				
+				holderInstances[i, j] = holder;
+			}
+		}
+	}
+	
+	void ResetHolders(){
+		if(holderInstances== null) return;
+		if(holderInstances.GetLength(0) <= 0) return;
+		
+		for (int i=0; i<holderInstances.GetLength(0); i++){
+			for (int j=0; j<holderInstances.GetLength(1); j++){
+				DestroyImmediate( holderInstances[i, j] );
+			}
+		}
 
-	public class DebugPropertiesForItems {
-		public Items itemInstance;
-		public Vector3 initialPosition;
-		public Vector3 offsetPosition;
-		public Vector2 shapeCenter;
-		public Vector2[] shape;
-    }
+		itemInstances = null;
+		Debuger("Deleted items in scene");
+	}
 
+////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////// CLASSES /////////////////////////////////
 
 	[System.Serializable]
 	public class Items {
@@ -275,35 +264,7 @@ public class MapBuilderManager : MonoBehaviour
 			cellIncrement += rowIncrement;
 		}
 
-		//DRAW DIMENTIONS HELPER
-		foreach( var currentGraphic in currentGraphics ) {
 
-			var properties = currentGraphic.Value;
-
-			var item = properties.itemInstance;
-			var initialPosition = properties.initialPosition;
-			var shape = properties.shape;
-			var shapeCenter = properties.shapeCenter;
-
-			//Skip items saved in project files
-			if( item?.graphics == null )
-				continue;
-
-			properties.offsetPosition = item.graphics.transform.position - initialPosition;
-
-			var itemScale = new Vector3( gridScale, 0.1f, gridScale );
-
-			for( int j = 0; j < item.localCoordenatesX.Length; j++ )
-			{
-				// 1. We're printing cell by cell the object shape made of 'shape.Length' squares
-				// 2. shapeCenter is the bounding box center of all the squares that compose the whole shape
-				var previousCenter = shape[j];
-				var newCenter = (previousCenter - shapeCenter) * gridScale;
-				var newCenterGlobalized = new Vector3( newCenter.x, 0, newCenter.y ) + initialPosition;
-
-				Gizmos.DrawCube( newCenterGlobalized, itemScale );
-			}
-		}
 
 	}
 
