@@ -9,6 +9,7 @@ public class Pickupable : MonoBehaviour
     public Vector2[] shape { get; private set; }
     public Container myContainer { get; private set; }
 
+
 	public void ResetOccupancy(){
 		myContainer = null;
 	}

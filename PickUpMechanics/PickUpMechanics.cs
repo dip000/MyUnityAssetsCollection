@@ -35,6 +35,11 @@ public class PickUpMechanics : MonoBehaviour
     public const bool occupied = true;
     public const bool free = false;
 
+    void Awake()
+    {
+        if( pickupHolder == null )
+            pickupHolder = transform;
+    }
 
     void Update()
     {
@@ -61,12 +66,17 @@ public class PickUpMechanics : MonoBehaviour
 
         if (targetPickupable == null)
         {
-            Debuger("There's object to pick up");
+            Debuger("There's no object to pick up");
             return;
         }
 
 		Transform targetTransform = targetPickupable.transform;
         targetContainer = targetPickupable.myContainer;
+
+        if( targetContainer == null )
+        {
+            Debug.LogWarning( "Container of Pickupable: " + targetTransform.name + " was not initialized. Insert it using PickupMechanicsAutoInserter, MapBuilderManager or your custom script" );
+        }
 
         if (targetContainer.isBlocked)
         {

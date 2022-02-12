@@ -1,10 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
-using System.Linq;
 
 
+[ExecuteInEditMode]
 public class MapBuilderManager : MonoBehaviour
 {
 	[Header("Select Graphics for each item")]
@@ -24,6 +22,17 @@ public class MapBuilderManager : MonoBehaviour
 
 	ArrayHolderRegister arrayHolderComponent;
 	public int currentMapIndex = 0;
+
+	void OnEnable()
+    {
+		if( maps == null )
+			return;
+		SerializeConfigurations();
+		itemInstances = new GameObject[maps.Length][];
+		containerInstances = new GameObject[maps.Length][,];
+		print("Serialized an updated");
+	}
+
 
 	/////////////////////////// MANAGING //////////////////////////////////////////
 	[ContextMenu("MakeLevel")]
@@ -92,15 +101,17 @@ public class MapBuilderManager : MonoBehaviour
         if (configurationsFile == null) return;
         if (Application.isPlaying) return;
 
-        SerializeConfigurations();
+		SerializeConfigurations();
+		itemInstances = new GameObject[maps.Length][];
+		containerInstances = new GameObject[maps.Length][,];
         Debuger("Serialized configurations");
 	}
 	
 ////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////// ITEMS PLACER ////////////////////////////
-	GameObject[] itemInstances;
-	GameObject[,] holderInstances;
+	GameObject[][] itemInstances;
+	GameObject[][,] containerInstances;
 
 	public void PlaceItems(){
 
@@ -109,8 +120,7 @@ public class MapBuilderManager : MonoBehaviour
 
 		//Use a place holder if there's no mapHolder
 		List<GameObject> placeHolders = new List<GameObject>();
-
-		itemInstances = new GameObject[ currentMap.itemTypes.Length ];
+		itemInstances[currentMapIndex] = new GameObject[currentMap.itemTypes.Length];
 
 		for (int i=0; i<currentMap.itemTypes.Length; i++){
 			var itemType = currentMap.itemTypes[i];
@@ -147,13 +157,14 @@ public class MapBuilderManager : MonoBehaviour
 
 			arrayHolderComponent.UpdateCoordenatesInOccupancyMap( globalCoordenates, PickUpMechanics.occupied );
 
-			//itemComponent.SetOccupancy( holderInstances[] );
+			itemComponent.SetOccupancy( containerInstances[currentMapIndex][(int)currentMap.positionsX[i], (int)currentMap.positionsY[i]].GetComponent<Container>() );
 			itemComponent.myName = item.itemName;
 			itemComponent.SetShape( itemShape );
 
 			//Save as a reference
-			itemInstances[i] = itemInstance;
+			itemInstances[currentMapIndex][i] = itemInstance;
 		}
+
 
 		//Delete used PlaceContainers
 		foreach(var placeHolder in placeHolders)
@@ -163,16 +174,18 @@ public class MapBuilderManager : MonoBehaviour
 	
 	[ContextMenu("ResetItems")]
 	public void ResetItems(){
-		if(itemInstances== null) return;
-		if(itemInstances.Length <= 0) return;
-		
-		foreach(var instance in itemInstances){
-			DestroyImmediate(instance);
+        for(int i=0; i< itemInstances[currentMapIndex].Length; i++ )
+        {
+			DestroyImmediate( itemInstances[currentMapIndex][i] );
 		}
 
-		itemInstances = null;
-		ResetHolders();
-		Debuger("Deleted items in scene");
+		for(int i=0; i< containerInstances[currentMapIndex].GetLength(0); i++ )
+        {
+			for(int j=0; j< containerInstances[currentMapIndex].GetLength(1); j++ )
+			{
+				DestroyImmediate( containerInstances[currentMapIndex][i,j] );
+			}
+		}
 	}
 
 
@@ -188,7 +201,7 @@ public class MapBuilderManager : MonoBehaviour
 			currentMap.mapHolder = mapHolder;
 		}
 
-		holderInstances = new GameObject[(int)currentMap.mapSizeX, (int)currentMap.mapSizeY];
+		containerInstances[currentMapIndex] = new GameObject[(int)currentMap.mapSizeX, (int)currentMap.mapSizeY];
 		var holder = containerGraphics;
 		var usedPlaceHolders = false;
 
@@ -217,7 +230,7 @@ public class MapBuilderManager : MonoBehaviour
 					containerComponent = instance.AddComponent<Container>();
 
 				containerComponent.coordenates = new Vector2( i, j );
-				holderInstances[i, j] = instance;
+				containerInstances[currentMapIndex][i, j] = instance;
 			}
 		}
 
@@ -225,19 +238,7 @@ public class MapBuilderManager : MonoBehaviour
 			DestroyImmediate( holder );
 	}
 	
-	void ResetHolders(){
-		if(holderInstances== null) return;
-		if(holderInstances.GetLength(0) <= 0) return;
-		
-		for (int i=0; i<holderInstances.GetLength(0); i++){
-			for (int j=0; j<holderInstances.GetLength(1); j++){
-				DestroyImmediate( holderInstances[i, j] );
-			}
-		}
 
-		itemInstances = null;
-		Debuger("Deleted Containers in scene");
-	}
 
 ////////////////////////////////////////////////////////////////////////////////////
 
