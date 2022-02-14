@@ -160,6 +160,7 @@ public class MapBuilderManager : MonoBehaviour
 			itemComponent.SetOccupancy( containerInstances[currentMapIndex][(int)currentMap.positionsX[i], (int)currentMap.positionsY[i]].GetComponent<Container>() );
 			itemComponent.myName = item.itemName;
 			itemComponent.SetShape( itemShape );
+			itemComponent.SetRegister( currentMap.mapHolder );
 
 			//Save as a reference
 			itemInstances[currentMapIndex][i] = itemInstance;

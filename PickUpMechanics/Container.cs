@@ -9,6 +9,7 @@ public class Container : MonoBehaviour
 
     bool isOccupied = false;
 	public Pickupable objectInside { get; private set; }
+	public Transform containerRegister { get; private set; }
 	[HideInInspector] public bool isBlocked = false;
 	
 	//Interesting bug if i declare this without private set..
@@ -33,6 +34,15 @@ public class Container : MonoBehaviour
 		
 		isOccupied = true;
         objectInside = _objectInside;
+	}
+
+	
+	public void SetRegister(Transform _containerRegister){
+		if(yieldControlToExternal){
+			return;
+		}
+		
+        containerRegister = _containerRegister;
 	}
 
 	
