@@ -11,6 +11,10 @@ public static class Vector2Calculations : object
 	}
 	
 	public static Vector2 VolumeCenter(Vector2[] coordenates){
+		
+		if( coordenates.Length == 1 )
+			return Vector3.zero;
+
 		Vector2 volumeCenter = Vector3.zero;
 		for( int i = 0; i < coordenates.Length; i++ )
 		{
@@ -21,6 +25,10 @@ public static class Vector2Calculations : object
 	
 	public static Vector2 BoundingBoxCenterOfCoordenates(Vector2[] coordenates)
 	{
+		//Middle of point zero is itself
+		if( coordenates.Length == 1 )
+			return Vector2.zero;
+		
 		//The middle of the farthest point in X,Y is the bounding box center
 		return ( BoundsOfCoordenates( coordenates ) * 0.5f );
 	}
@@ -38,7 +46,7 @@ public static class Vector2Calculations : object
 		return maxBoundsPoint;
 	}
 
-	static Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 reference)
+	public static Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 reference)
     {
 		Vector2[] referenced= new Vector2[coordenates.Length];
 
@@ -60,15 +68,18 @@ public static class Vector2Calculations : object
 	public static Vector2[] RotateMatrixAngle(Vector2[] vector, int angle)
 	{
 		//changes angle in degrees by times to rotate 90 degrees
-		int times;
+		
+		int times = (int)System.Math.Round( (angle % 360) / 90.0f );
 		if (angle < 0)
-			times = 4 - (angle % 360) / 90;
+			times = -times;
 		else
-			times = -(angle % 360) / 90;
+			times = 4 - times;
 
+		//Debug.Log( "Rotating angle: " + angle + " times: " + times );
 		//Rotate 4 times 90 degrees is not rotating at all
-		if (times == 4)
+		if( times == 0 || times == 4 )
 			return vector;
+
 
 		return RotateMatrixTimes(vector, times);
 	}
@@ -111,7 +122,14 @@ public static class Vector2Calculations : object
 		return vectorized;
 	}
 	
+	public static Vector3 GridSpacePosition(Vector2[] shape, Vector2 position, float scale=1)
+    {
+		Vector2 boxCenter = BoundingBoxCenterOfCoordenates( shape );
+		Vector2 gridSpacePosition = (boxCenter + position) * scale;
+		Vector3 gridSpacePosition3D = new Vector3( gridSpacePosition.x, 0, gridSpacePosition.y );
 
+		return gridSpacePosition3D;
+	}
 
 
 }

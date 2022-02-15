@@ -34,15 +34,17 @@ public class Container : MonoBehaviour
 		
 		isOccupied = true;
         objectInside = _objectInside;
+		print( "_objectInside.myName:" + _objectInside.myName);
 	}
 
-	
+
 	public void SetRegister(Transform _containerRegister){
 		if(yieldControlToExternal){
 			return;
 		}
 		
         containerRegister = _containerRegister;
+		//print( "containerRegister.name:" + containerRegister.name );
 	}
 
 	

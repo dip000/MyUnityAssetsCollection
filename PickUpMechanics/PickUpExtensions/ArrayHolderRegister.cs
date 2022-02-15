@@ -29,6 +29,14 @@ public class ArrayHolderRegister : MonoBehaviour {
 
 	//------------------------ DEBUGERS -------------------------------------
 	public bool showDebugs=true; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
-	void ArrayDebuger(Vector2[] vectorArray, string text="ArrayDebuger") { if (showDebugs) for (int i=0; i<vectorArray.Length; i++) Debug.Log(text + " ["+i+"] " + vectorArray[i]); }
+	void ArrayDebuger(Vector2[] vectorArray, string text="ArrayDebuger") {
+		if( showDebugs )
+		{
+			var debugString = text;
+			for( int i = 0; i < vectorArray.Length; i++ )
+				debugString = "," + vectorArray[i];
+			Debug.Log(debugString);
+		}
+	}
 
 }

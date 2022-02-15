@@ -92,10 +92,10 @@ public class MapBuilderManager : MonoBehaviour
     }
 
 	private void OnValidate()
-    {
+	{
 		//If user inputed a configurations file. Serialize configurations so user can
 		//place the graphics in its corresponding items
-		if (configurationsFile == previousConfigurationsFile) return;
+		if( configurationsFile == previousConfigurationsFile) return;
         previousConfigurationsFile = configurationsFile;
 
         if (configurationsFile == null) return;
@@ -141,9 +141,7 @@ public class MapBuilderManager : MonoBehaviour
 			Vector2[] globalCoordenates = Vector2Calculations.Globalize(itemShapeRotated, itemPosition);
 
 			//Find world space position to place the item
-			Vector2 boxCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( itemShapeRotated);
-			Vector2 gridSpacePosition = (boxCenter + itemPosition) * gridScale;
-			Vector3 worldSpacePosition = new Vector3(gridSpacePosition.x, 0, gridSpacePosition.y) + mapHolder.position;
+			Vector3 worldSpacePosition = Vector2Calculations.GridSpacePosition( itemShapeRotated, itemPosition) + mapHolder.position;
 
 			//Apply transforms and properties
 			//NOTE: Damn rotation is inverted natively, it rotates clockwise on positive angles. So 360-angle rotates correctly
@@ -157,10 +155,15 @@ public class MapBuilderManager : MonoBehaviour
 
 			arrayHolderComponent.UpdateCoordenatesInOccupancyMap( globalCoordenates, PickUpMechanics.occupied );
 
-			itemComponent.SetOccupancy( containerInstances[currentMapIndex][(int)currentMap.positionsX[i], (int)currentMap.positionsY[i]].GetComponent<Container>() );
+			//Find container
+			var container = containerInstances[currentMapIndex][(int)currentMap.positionsX[i], (int)currentMap.positionsY[i]];
+			var containerComponent = container.GetComponent<Container>();
+
+			//Setup pickupable
 			itemComponent.myName = item.itemName;
 			itemComponent.SetShape( itemShape );
-			itemComponent.SetRegister( currentMap.mapHolder );
+			containerComponent.SetOccupancy( itemComponent );
+			itemComponent.SetOccupancy( containerComponent );
 
 			//Save as a reference
 			itemInstances[currentMapIndex][i] = itemInstance;
@@ -230,6 +233,8 @@ public class MapBuilderManager : MonoBehaviour
 				if( instance.TryGetComponent( out Container containerComponent ) == false)
 					containerComponent = instance.AddComponent<Container>();
 
+				//Setup container
+				containerComponent.SetRegister( currentMap.mapHolder );
 				containerComponent.coordenates = new Vector2( i, j );
 				containerInstances[currentMapIndex][i, j] = instance;
 			}
@@ -333,7 +338,6 @@ public class MapBuilderManager : MonoBehaviour
 			Gizmos.DrawLine(cellIncrement - offset, colIncrement + cellIncrement - offset);
 			cellIncrement += rowIncrement;
 		}
-
 
 
 	}
