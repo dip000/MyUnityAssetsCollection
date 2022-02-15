@@ -7,15 +7,8 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 	
 	public bool BasePickUpCondition { get => EvaluatePickUpCondition(); } 
 	public bool BaseDropCondition { get => EvaluateDropCondition(); }
-	
-	ArrayHolderRegister arrayHolderRegister;
-	Pickupable item;
-	Container container;
-	
-	
+
 	void Awake(){
-		arrayHolderRegister = GetComponent<ArrayHolderRegister>();
-		
 		//Register this script and its custom conditions as the aditional conditions to pick up
 		PickUpMechanics.ListenPickupConditionFrom( this, "BasePickUpCondition");
 		PickUpMechanics.ListenDropConditionFrom( this, "BaseDropCondition");
@@ -27,7 +20,6 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 	}
 	
 	bool EvaluateDropCondition(){
-		UpdateLookUpVariables();
 
 		if (EvaluateOccupancyConditions() == false){
 			return false;
@@ -38,13 +30,16 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 
 	
 	bool EvaluateOccupancyConditions(){
-		Vector2[] globalCoordenates = new Vector2[0];
+		//Look up variables
+		var register = PickUpMechanics.targetContainer.containerRegister;
+		var occupancyMap = register.GetComponent<ArrayHolderRegister>().occupancyMap;
+		var globalCoordenates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordenatesOfTarget( PickUpMechanics.handObject );
 		
 		for(int i=0; i<globalCoordenates.Length; i++){
 			int x = (int) globalCoordenates[i].x;
 			int y = (int) globalCoordenates[i].y;
 			
-			if( x > (arrayHolderRegister.occupancyMap.GetLength(0)-1) || y > (arrayHolderRegister.occupancyMap.GetLength(1)-1) ){
+			if( x > (occupancyMap.GetLength(0)-1) || y > (occupancyMap.GetLength(1)-1) ){
 				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is outside of bounds (positive index)");
 				return false;
 			}
@@ -53,7 +48,7 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 				return false;
 			}
 			
-			if( arrayHolderRegister.occupancyMap[x, y] == PickUpMechanics.occupied){
+			if( occupancyMap[x, y] == PickUpMechanics.occupied){
 				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is occupied");
 				return false;
 			}
@@ -61,11 +56,6 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 		
 		Debuger("Occupancy condition met");
 		return true;
-	}
-	
-	void UpdateLookUpVariables(){
-		item = PickUpMechanics.targetPickupable;
-		container = PickUpMechanics.targetContainer;
 	}
 	
 	public bool showDebugs=true; void Debuger(string text) { if (showDebugs) Debug.Log(text); }
