@@ -33,23 +33,23 @@ public class BaseConditionsForPickUpMechanics : MonoBehaviour {
 		//Look up variables
 		var register = PickUpMechanics.targetContainer.containerRegister;
 		var occupancyMap = register.GetComponent<ArrayHolderRegister>().occupancyMap;
-		var globalCoordenates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordenatesOfTarget( PickUpMechanics.handObject );
+		var globalCoordinates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordinatesOfTarget( PickUpMechanics.handObject );
 		
-		for(int i=0; i<globalCoordenates.Length; i++){
-			int x = (int) globalCoordenates[i].x;
-			int y = (int) globalCoordenates[i].y;
+		for(int i=0; i<globalCoordinates.Length; i++){
+			int x = (int) globalCoordinates[i].x;
+			int y = (int) globalCoordinates[i].y;
 			
 			if( x > (occupancyMap.GetLength(0)-1) || y > (occupancyMap.GetLength(1)-1) ){
-				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is outside of bounds (positive index)");
+				Debuger("Item Drop couldn't happen because coordenate " + globalCoordinates[i] + " is outside of bounds (positive index)");
 				return false;
 			}
 			if( x < 0 || y < 0 ){
-				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is outside of bounds (negative index)");
+				Debuger("Item Drop couldn't happen because coordenate " + globalCoordinates[i] + " is outside of bounds (negative index)");
 				return false;
 			}
 			
 			if( occupancyMap[x, y] == PickUpMechanics.occupied){
-				Debuger("Item Drop couldn't happen because coordenate " + globalCoordenates[i] + " is occupied");
+				Debuger("Item Drop couldn't happen because coordenate " + globalCoordinates[i] + " is occupied");
 				return false;
 			}
 		}

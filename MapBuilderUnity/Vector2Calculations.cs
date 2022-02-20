@@ -10,29 +10,30 @@ public static class Vector2Calculations : object
 		return new Vector2( x, y );
 	}
 	
-	public static Vector2 VolumeCenter(Vector2[] coordenates){
+	public static Vector2 VolumeCenter(Vector2[] coordinates){
 		
-		if( coordenates.Length == 1 )
+		if( coordinates.Length == 1 )
 			return Vector3.zero;
 
 		Vector2 volumeCenter = Vector3.zero;
-		for( int i = 0; i < coordenates.Length; i++ )
+		for( int i = 0; i < coordinates.Length; i++ )
 		{
-			volumeCenter += coordenates[i];
+			volumeCenter += coordinates[i];
 		}
-		return volumeCenter / coordenates.Length;
+		return volumeCenter / coordinates.Length;
 	}
 	
-	public static Vector2 BoundingBoxCenterOfCoordenates(Vector2[] coordenates)
+	public static Vector2 BoundingBoxCenterOfCoordinates(Vector2[] coordinates)
 	{
 		//Middle of point zero is itself
-		if( coordenates.Length == 1 )
+		if( coordinates.Length == 1 )
 			return Vector2.zero;
 		
 		//The middle of the farthest point in X,Y is the bounding box center
-		return ( BoundsOfCoordenates( coordenates ) * 0.5f );
+		return ( BoundsOfCoordinates( coordinates ) * 0.5f );
 	}
-	public static Vector2 BoundsOfCoordenates( Vector2[] points )
+	
+	public static Vector2 BoundsOfCoordinates( Vector2[] points )
 	{
 		Vector2 maxBoundsPoint = Vector3.zero;
 		for( int i = 0; i < points.Length; i++ )
@@ -46,23 +47,23 @@ public static class Vector2Calculations : object
 		return maxBoundsPoint;
 	}
 
-	public static Vector2[] ReferenceCoordenates(Vector2[] coordenates, Vector2 reference)
+	public static Vector2[] ReferenceCoordinates(Vector2[] coordinates, Vector2 reference)
     {
-		Vector2[] referenced= new Vector2[coordenates.Length];
+		Vector2[] referenced= new Vector2[coordinates.Length];
 
-		for( int i = 0; i < coordenates.Length; i++ ){
-			referenced[i] = coordenates[i] + reference;
+		for( int i = 0; i < coordinates.Length; i++ ){
+			referenced[i] = coordinates[i] + reference;
 		}
 
 		return referenced;
 	}
 
-	public static Vector2[] Globalize(Vector2[] localCoordenates, Vector2 positionIndex){
-		return ReferenceCoordenates(localCoordenates, positionIndex);
+	public static Vector2[] Globalize(Vector2[] localCoordinates, Vector2 positionIndex){
+		return ReferenceCoordinates(localCoordinates, positionIndex);
 	}
 
-	public static Vector2[] Localize(Vector2[] globalCoordenates, Vector2 positionIndex) { 
-		return ReferenceCoordenates(globalCoordenates, -positionIndex);
+	public static Vector2[] Localize(Vector2[] globalCoordinates, Vector2 positionIndex) { 
+		return ReferenceCoordinates(globalCoordinates, -positionIndex);
 	}
 
 	public static Vector2[] RotateMatrixAngle(Vector2[] vector, int angle)
@@ -124,7 +125,7 @@ public static class Vector2Calculations : object
 	
 	public static Vector3 GridSpacePosition(Vector2[] shape, Vector2 position, float scale=1)
     {
-		Vector2 boxCenter = BoundingBoxCenterOfCoordenates( shape );
+		Vector2 boxCenter = BoundingBoxCenterOfCoordinates( shape );
 		Vector2 gridSpacePosition = (boxCenter + position) * scale;
 		Vector3 gridSpacePosition3D = new Vector3( gridSpacePosition.x, 0, gridSpacePosition.y );
 

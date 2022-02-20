@@ -14,7 +14,7 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 	
 ////////////////////////// ADITIONAL CONDITIONS //////////////////////////////////////////////////
 
-	public Vector2[] CoordenatesOfTarget(Pickupable item){
+	public Vector2[] CoordinatesOfTarget(Pickupable item){
 		Container container = PickUpMechanics.targetContainer;
 		var angle = (int)item.transform.eulerAngles.y;
 		var conditions = PickUpMechanics.targetContainer.containerRegister;
@@ -24,7 +24,7 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 			Debuger("Precalculated new item: " + item.myName);
 		}
 		
-		return Vector2Calculations.Globalize( itemsPrecalculations[item].ShapeByAngle(angle), container.coordenates );
+		return Vector2Calculations.Globalize( itemsPrecalculations[item].ShapeByAngle(angle), container.coordinates );
 	}
 	
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,15 +44,15 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 			Debuger("Precalculated new item: " + item.myName);
 		}
 
-		//Get and update coordenates to register
+		//Get and update coordinates to register
 		var itemRotation = (int)item.transform.eulerAngles.y;
-		var globalCoordenates = Vector2Calculations.Globalize( itemsPrecalculations[item].ShapeByAngle(itemRotation), container.coordenates );
-		ArrayDebuger(globalCoordenates, "Bug of first pick here! globalCoordenates: ");
+		var globalCoordinates = Vector2Calculations.Globalize( itemsPrecalculations[item].ShapeByAngle(itemRotation), container.coordinates );
+		ArrayDebuger(globalCoordinates, "Bug of first pick here! globalCoordinates: ");
 
 		//Router data to the corresponding register
 		var register = PickUpMechanics.targetContainer.containerRegister;
 		if( register.TryGetComponent( out ArrayHolderRegister registerComponent ))
-			registerComponent.UpdateCoordenatesInOccupancyMap( globalCoordenates, PickUpMechanics.free );
+			registerComponent.UpdateCoordinatesInOccupancyMap( globalCoordinates, PickUpMechanics.free );
 		else
 			Debug.LogWarning("INSTRUCTION INTERPRETER. Register " + register.name + " Must have a ArrayHolderRegister to register data" );
 	}
@@ -68,8 +68,8 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 		var itemRotation = (int)item.transform.eulerAngles.y;
 
 		//Spatial locations using precalculated variables
-		var globalCoordenates = Vector2Calculations.Globalize( itemPrecalculations.ShapeByAngle(itemRotation), container.coordenates );
-		var gridSpacePosition = itemPrecalculations.CenterByAngle(itemRotation) + container.coordenates;
+		var globalCoordinates = Vector2Calculations.Globalize( itemPrecalculations.ShapeByAngle(itemRotation), container.coordinates );
+		var gridSpacePosition = itemPrecalculations.CenterByAngle(itemRotation) + container.coordinates;
 		var worldSpacePosition = new Vector3( gridSpacePosition.x, 0, gridSpacePosition.y ) + register.position;
 
 		//Apply transforms and properties
@@ -78,7 +78,7 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 
 		//Router data to the corresponding register
 		if( register.TryGetComponent( out ArrayHolderRegister registerComponent ) )
-			registerComponent.UpdateCoordenatesInOccupancyMap( globalCoordenates, PickUpMechanics.occupied );
+			registerComponent.UpdateCoordinatesInOccupancyMap( globalCoordinates, PickUpMechanics.occupied );
 		else
 			Debug.LogWarning( "INSTRUCTION INTERPRETER. Register " + register.name + " Must have a ArrayHolderRegister to register data" );
 
@@ -105,7 +105,7 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 			shapeCenters = new Dictionary<int, Vector2>();
 			
 			//Same bounding box center for all rotations
-			var shapeBoundsCenter = Vector2Calculations.BoundingBoxCenterOfCoordenates( item.shape );
+			var shapeBoundsCenter = Vector2Calculations.BoundingBoxCenterOfCoordinates( item.shape );
 			for(int rot=0; rot<360; rot+=90 )
             {
 				//Saves all rotations so it doesn't have to recalculate on real time
@@ -113,7 +113,7 @@ public class InstructionInterpreterForPickupMechanics : MonoBehaviour
 				//Volume center is fussed with the shape in a displacement
 				var shapeRotated = Vector2Calculations.RotateMatrixAngle( item.shape, rot );
 				var shapeVolumeCenter = Vector2Calculations.RoundVector( Vector2Calculations.VolumeCenter( shapeRotated ) );
-				var shapeDisplaced = Vector2Calculations.ReferenceCoordenates(shapeRotated, -shapeVolumeCenter);
+				var shapeDisplaced = Vector2Calculations.ReferenceCoordinates(shapeRotated, -shapeVolumeCenter);
 				shapeRotations[rot] = shapeDisplaced;
 				
 				shapeCenters[rot] = shapeBoundsCenter - shapeVolumeCenter;

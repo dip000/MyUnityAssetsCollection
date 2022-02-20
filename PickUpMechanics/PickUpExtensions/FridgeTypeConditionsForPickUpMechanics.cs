@@ -19,21 +19,21 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 		//Look up variables
 		var register = PickUpMechanics.targetContainer.containerRegister;
 		var occupancyMap = register.GetComponent<ArrayHolderRegister>().occupancyMap;
-		var globalCoordenates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordenatesOfTarget( PickUpMechanics.targetPickupable );
+		var globalCoordinates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordinatesOfTarget( PickUpMechanics.targetPickupable );
 
 		// If item have at least one part in frontal row, pick up inconditionally
-		for (int i=0; i< globalCoordenates.Length; i++){
-			if( (int)globalCoordenates[i].y == 0 ){
+		for (int i=0; i< globalCoordinates.Length; i++){
+			if( (int)globalCoordinates[i].y == 0 ){
 				Debuger("Pick up condition (Custom Fridge-Type) of being in front row was a success");
 				return true;
 			}
 		}
 
 		//Must be at least one free slot in front of container (assuming target is at the back because of previous condition)
-		for (int i = 0; i < globalCoordenates.Length; i++)
+		for (int i = 0; i < globalCoordinates.Length; i++)
 		{
-			int x = (int)globalCoordenates[i].x;
-			int y = (int)globalCoordenates[i].y - 1;
+			int x = (int)globalCoordinates[i].x;
+			int y = (int)globalCoordinates[i].y - 1;
 			if (occupancyMap[x, y] == PickUpMechanics.free)
 			{
 				Debuger("Pick up condition (Custom Fridge-Type) of have free a slot in frnt row was a success");
@@ -50,12 +50,12 @@ public class FridgeTypeConditionsForPickUpMechanics : MonoBehaviour
 		//Look up variables
 		var register = PickUpMechanics.targetContainer.containerRegister;
 		var occupancyMap = register.GetComponent<ArrayHolderRegister>().occupancyMap;
-		var globalCoordenates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordenatesOfTarget( PickUpMechanics.handObject );
+		var globalCoordinates = GetComponent<InstructionInterpreterForPickupMechanics>().CoordinatesOfTarget( PickUpMechanics.handObject );
 
-		for (int i = 0; i < globalCoordenates.Length; i++)
+		for (int i = 0; i < globalCoordinates.Length; i++)
 		{
-			int x = (int)globalCoordenates[i].x;
-			int y = (int)globalCoordenates[i].y;
+			int x = (int)globalCoordinates[i].x;
+			int y = (int)globalCoordinates[i].y;
 
 			//If one coordenate is at the front, that's a pass
 			if (y == 0)

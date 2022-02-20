@@ -5,7 +5,7 @@ using UnityEngine;
 public class Container : MonoBehaviour
 {
 
-	public Vector2 coordenates;
+	public Vector2 coordinates;
 
     bool isOccupied = false;
 	public Pickupable objectInside { get; private set; }

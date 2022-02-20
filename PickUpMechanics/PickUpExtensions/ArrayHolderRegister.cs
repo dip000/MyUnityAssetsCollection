@@ -13,13 +13,13 @@ public class ArrayHolderRegister : MonoBehaviour {
 		Debuger("Containers Setted up");
 	}
 
-	public void UpdateCoordenatesInOccupancyMap(Vector2[] coordenates, bool state){
+	public void UpdateCoordinatesInOccupancyMap(Vector2[] coordinates, bool state){
 		
 		try{
-			string debugString = "Updated "+ coordenates.Length + " coordenates in map: ";
-			for(int i=0; i<coordenates.Length; i++){
-				occupancyMap[(int)coordenates[i].x, (int)coordenates[i].y] = state;
-				debugString += ", " + coordenates[i].ToString();
+			string debugString = "Updated "+ coordinates.Length + " coordinates in map: ";
+			for(int i=0; i<coordinates.Length; i++){
+				occupancyMap[(int)coordinates[i].x, (int)coordinates[i].y] = state;
+				debugString += ", " + coordinates[i].ToString();
 			}
 			Debuger( debugString );
 		} catch{
