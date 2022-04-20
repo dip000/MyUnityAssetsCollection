@@ -63,7 +63,7 @@ public class Drawer : MonoBehaviour
 	//All-encompassing-foolproff way of detecting hover
 	bool HoverOverHandle()
     {
-		bool hasHitHandle = RayCaster.HasHit( handle );
+		bool hasHitHandle = RayCaster.HitTransform( handle );
 		return hasHitHandle;
 	}
 
